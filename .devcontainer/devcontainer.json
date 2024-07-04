@@ -1,0 +1,21 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "serayuzgur.crates",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "wayou.vscode-todo-highlight",
+        "alefragnani.bookmarks",
+        "christian-kohler.path-intellisense",
+        "alefragnani.Bookmarks"
+      ]
+    }
+  },
+  "forwardPorts": [
+    8080
+  ]
+}
