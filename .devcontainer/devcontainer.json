@@ -11,7 +11,8 @@
         "wayou.vscode-todo-highlight",
         "alefragnani.bookmarks",
         "christian-kohler.path-intellisense",
-        "alefragnani.Bookmarks"
+        "alefragnani.Bookmarks",
+        "ms-azuretools.vscode-docker"
       ]
     }
   },
