@@ -1,0 +1,25 @@
+[package]
+name = "lib-auth"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+doctest = false
+
+[dependencies]
+argon2 = { version = "0.5.3", features = ["std"] }
+derive_more = "0.99.18"
+enum_dispatch = "0.3.13"
+hmac = "0.12.1"
+lazy-regex = "3.1.0"
+lib-utils = { version = "0.1.0", path = "../lib-utils" }
+serde = { version = "1.0.204", features = ["derive"] }
+sha2 = "0.10.8"
+tokio = "1.38.0"
+uuid = "1.9.1"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+anyhow = "1.0.86"
