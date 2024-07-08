@@ -1,0 +1,10 @@
+FROM rust:alpine3.20
+RUN apk add --update --no-cache \ 
+    git build-base pkgconfig openssl-dev openssl-libs-static \
+    lazygit neovim ripgrep alpine-sdk fd curl gzip unzip wget neovim-doc \
+    tree-sitter-rust
+RUN git clone https://github.com/LazyVim/starter ~/.config/nvim
+ENV PATH="$PATH:/usr/local/cargo/bin"
+RUN rustup component add rust-analyzer rustfmt
+WORKDIR /root/workspace
+# CMD ["tail", "-f", "/dev/null"]

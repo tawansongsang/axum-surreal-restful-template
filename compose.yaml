@@ -1,0 +1,9 @@
+services:
+  axum:
+    build:
+      context: .
+      dockerfile: Dockerfile.development
+    restart: unless-stopped
+    command: [ "tail", "-f", "/dev/null" ]
+    volumes:
+      - .:/root/workspace
