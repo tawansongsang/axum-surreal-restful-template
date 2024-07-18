@@ -5,7 +5,7 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "serayuzgur.crates",
+        "fill-labs.dependi",
         "rust-lang.rust-analyzer",
         "tamasfe.even-better-toml",
         "wayou.vscode-todo-highlight",

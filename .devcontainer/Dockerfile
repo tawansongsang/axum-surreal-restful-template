@@ -1,3 +1,4 @@
-FROM rust:alpine3.20
-RUN apk add --no-cache git build-base pkgconfig openssl-dev openssl-libs-static
-ENV PATH="$PATH:/usr/local/cargo/bin"
+FROM rust:slim-bookworm
+RUN apt update && apt upgrade -y \
+    && apt install -y git
+RUN rustup component add rustfmt
