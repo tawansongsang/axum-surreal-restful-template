@@ -5,17 +5,21 @@ use surrealdb::sql;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
-pub struct UserInfo {
+pub struct Users {
     pub id: sql::Thing,
     pub username: String,
     pub email: String,
     pub email_verified: sql::Datetime,
-    pub name: String,
+    pub title: String,
+    pub first_name: String,
+    pub middle_name: Option<String>,
+    pub last_name: String,
 
     // -- pwd and token info
     pub password: String,
     pub password_salt: Uuid,
     pub token_salt: Uuid,
+    pub role: String,
     pub create_by: sql::Thing,
     pub create_on: sql::Datetime,
     pub update_by: sql::Thing,
@@ -23,12 +27,16 @@ pub struct UserInfo {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct UserInfoGet {
+pub struct UsersGet {
     pub id: sql::Thing,
     pub username: String,
     pub email: String,
     pub email_verified: sql::Datetime,
-    pub name: String,
+    pub title: String,
+    pub first_name: String,
+    pub middle_name: Option<String>,
+    pub last_name: String,
+    pub role: String,
 
     pub create_by: sql::Thing,
     pub create_on: sql::Datetime,
@@ -37,30 +45,35 @@ pub struct UserInfoGet {
 }
 
 #[derive(Debug, Serialize)]
-pub struct UserInfoForCreate {
+pub struct UsersForCreate {
     pub username: String,
-    // pub email: String,
+    pub email: String,
     // pub email_verified: sql::Datetime,
-    pub name: String,
+    pub title: String,
+    pub first_name: String,
+    pub middle_name: Option<String>,
+    pub last_name: String,
     pub password: String,
 }
 
 #[derive(Debug, Serialize)]
-pub struct UserInfoCreated<'a> {
+pub struct UsersCreated<'a> {
     pub username: &'a str,
     pub email: &'a str,
     // pub email_verified: sql::Datetime,
-    pub name: String,
+    pub title: String,
+    pub first_name: String,
+    pub middle_name: Option<String>,
+    pub last_name: String,
     pub password: String,
     pub create_by: &'a Option<sql::Thing>,
     pub update_by: &'a Option<sql::Thing>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct UserInfoForLogin {
+pub struct UsersForLogin {
     pub id: sql::Thing,
     pub username: String,
-    pub name: String,
     pub password: Option<String>, // encrypted, #_scheme_id_#....
     pub password_salt: Uuid,
     pub token_salt: Uuid,
@@ -68,7 +81,7 @@ pub struct UserInfoForLogin {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct UserInfoForAuth {
+pub struct UsersForAuth {
     pub id: sql::Thing,
     pub username: String,
 
@@ -77,6 +90,6 @@ pub struct UserInfoForAuth {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct UserInfoRecord {
+pub struct UsersRecord {
     pub id: sql::Thing,
 }

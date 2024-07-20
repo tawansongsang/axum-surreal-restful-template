@@ -1,4 +1,14 @@
 {
     "editor.formatOnSave": true,
     "bookmarks.saveBookmarksInProject": true,
+    "advancedNewFile.exclude": {
+        "target": true,
+        "tmp": true,
+    },
+    "advancedNewFile.showInformationMessages": true,
+    "advancedNewFile.convenienceOptions": [
+        "last",
+        "current",
+        "root"
+    ]
 }

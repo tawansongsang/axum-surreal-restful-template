@@ -8,6 +8,9 @@
         "christian-kohler.path-intellisense",
         "alefragnani.Bookmarks",
         "ms-azuretools.vscode-docker",
-        "vscodevim.vim"
+        "vscodevim.vim",
+        "patbenatar.advanced-new-file",
+        "yzhang.markdown-all-in-one",
+        "surrealdb.surrealql"
     ]
 }

@@ -6,22 +6,22 @@ use crate::{
     model::{Error, ModelManager, Result},
 };
 
-use super::{UserInfo, UserInfoCreated, UserInfoForCreate, UserInfoRecord};
+use super::{Users, UsersCreated, UsersForCreate, UsersRecord};
 
-pub struct UserInfoBmc;
+pub struct UsersBmc;
 
-impl UserInfoBmc {
+impl UsersBmc {
     pub async fn get<'de, E>(_ctx: &Ctx, mm: &ModelManager, id: sql::Uuid) -> Result<Option<E>>
     where
         E: DeserializeOwned,
     {
         let db = mm.db();
-        let sql = "SELECT * FROM user_info:$id LIMIT 1;";
+        let sql = "SELECT * FROM users:$id LIMIT 1;";
         let mut result = db.query(sql).bind(("id", id.to_string())).await?;
 
-        let user_info: Option<E> = result.take(0)?;
+        let users: Option<E> = result.take(0)?;
 
-        Ok(user_info)
+        Ok(users)
     }
 
     pub async fn first_by_username<'de, E>(
@@ -33,15 +33,15 @@ impl UserInfoBmc {
         E: DeserializeOwned,
     {
         let db = mm.db();
-        let sql = "SELECT * FROM user_info WHERE username = $username LIMIT 1;";
+        let sql = "SELECT * FROM users WHERE username = $username LIMIT 1;";
         let mut result = db
             .query(sql)
             .bind(("username", username.to_string()))
             .await?;
 
-        let user_info_for_auth: Option<E> = result.take(0)?;
+        let users_for_auth: Option<E> = result.take(0)?;
 
-        Ok(user_info_for_auth)
+        Ok(users_for_auth)
     }
 
     pub async fn first_by_id<'de, E>(_ctx: &Ctx, mm: &ModelManager, id: &str) -> Result<Option<E>>
@@ -49,9 +49,9 @@ impl UserInfoBmc {
         E: DeserializeOwned,
     {
         let db = mm.db();
-        let user_info_for_auth = db.select(("user_info", id)).await?;
+        let users_for_auth = db.select(("users", id)).await?;
 
-        Ok(user_info_for_auth)
+        Ok(users_for_auth)
     }
 
     pub async fn update_pwd(
@@ -62,7 +62,7 @@ impl UserInfoBmc {
     ) -> Result<()> {
         let db = mm.db();
         let sql =
-            "UPDATE ONLY user_info:&id SET password = &password update_by = user_info:&update_by update_on = time::now();";
+            "UPDATE ONLY users:&id SET password = &password update_by = users:&update_by update_on = time::now();";
         let mut result = db
             .query(sql)
             .bind(("id", id))
@@ -70,7 +70,7 @@ impl UserInfoBmc {
             .bind(("update_by", ctx.user_id()))
             .await?;
 
-        let _user_info: Option<UserInfo> = result.take(0)?;
+        let _users: Option<Users> = result.take(0)?;
 
         Ok(())
     }
@@ -78,20 +78,16 @@ impl UserInfoBmc {
     pub async fn create(
         ctx: &Ctx,
         mm: &ModelManager,
-        user_info_for_create: UserInfoForCreate,
-    ) -> Result<UserInfoRecord> {
+        users_for_create: UsersForCreate,
+    ) -> Result<UsersRecord> {
         // Verify Username in DB
-        let user_info = UserInfoBmc::first_by_username::<UserInfoRecord>(
-            &ctx,
-            mm,
-            &user_info_for_create.username,
-        )
-        .await?;
-        if let Some(_) = user_info {
+        let users =
+            UsersBmc::first_by_username::<UsersRecord>(&ctx, mm, &users_for_create.username)
+                .await?;
+        if let Some(_) = users {
             return Err(Error::UsernameAlreadyExists);
         }
-        let validate_username =
-            UserInfoBmc::validate_username(mm, &user_info_for_create.username).await?;
+        let validate_username = UsersBmc::validate_username(mm, &users_for_create.username).await?;
         if !validate_username {
             return Err(Error::UsernameNotValidFormat);
         }
@@ -100,21 +96,23 @@ impl UserInfoBmc {
 
         let user_id_create = ctx.user_id_thing();
 
-        let user_info_created = UserInfoCreated {
-            username: &user_info_for_create.username,
-            email: &user_info_for_create.username,
-            name: user_info_for_create.name,
-            password: user_info_for_create.password,
+        let users_created = UsersCreated {
+            username: &users_for_create.username,
+            email: &users_for_create.username,
+            title: users_for_create.title,
+            first_name: users_for_create.first_name,
+            middle_name: users_for_create.middle_name,
+            last_name: users_for_create.last_name,
+            password: users_for_create.password,
             create_by: &user_id_create,
             update_by: &user_id_create,
         };
 
-        let mut created: Vec<UserInfoRecord> =
-            db.create("user_info").content(user_info_created).await?;
+        let mut created: Vec<UsersRecord> = db.create("users").content(users_created).await?;
 
-        let user_info = created.pop().ok_or(Error::DataNotFound)?;
+        let users = created.pop().ok_or(Error::DataNotFound)?;
 
-        Ok(user_info)
+        Ok(users)
     }
 
     pub async fn validate_password(mm: &ModelManager, hash: &str, password: &str) -> Result<bool> {
@@ -151,7 +149,7 @@ impl UserInfoBmc {
 mod tests {
     pub type Result<T> = core::result::Result<T, Error>;
     pub type Error = Box<dyn std::error::Error>; // For tests.
-    use crate::model::{self, users::UserInfoForAuth};
+    use crate::model::{self, users::UsersForAuth};
 
     use super::*;
     use serial_test::serial;
@@ -165,7 +163,7 @@ mod tests {
         let fx_username = "demo1";
 
         // -- Exec
-        let user = UserInfoBmc::first_by_username::<UserInfoForAuth>(&ctx, &mm, fx_username)
+        let user = UsersBmc::first_by_username::<UsersForAuth>(&ctx, &mm, fx_username)
             .await?
             .ok_or("Should have user 'demo1'")?;
 
