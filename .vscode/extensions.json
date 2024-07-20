@@ -11,6 +11,7 @@
         "vscodevim.vim",
         "patbenatar.advanced-new-file",
         "yzhang.markdown-all-in-one",
-        "surrealdb.surrealql"
+        "surrealdb.surrealql",
+        "humao.rest-client"
     ]
 }

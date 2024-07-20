@@ -10,5 +10,11 @@
         "last",
         "current",
         "root"
-    ]
+    ],
+    "rest-client.environmentVariables": {
+        "$shared": {
+            "host": "localhost",
+            "port": "8080",
+        }
+    }
 }

@@ -1,6 +1,6 @@
 USE NS ns_template;
 USE DB db_template;
-CREATE user_info:iR1f8i7Wg7jipR3uhDhJ CONTENT {
+CREATE users:iR1f8i7Wg7jipR3uhDhJ CONTENT {
     username: 'demo1@demo.com',
     email: 'demo1@demo.com',
     title: 'นาย',
