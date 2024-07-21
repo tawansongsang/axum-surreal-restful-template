@@ -20,7 +20,7 @@ pub struct Users {
     pub password_salt: Uuid,
     pub token_salt: Uuid,
 
-    pub image: String,
+    pub image: Option<String>,
     pub role: String,
     pub create_by: sql::Thing,
     pub create_on: sql::Datetime,
@@ -39,7 +39,8 @@ pub struct UsersGet {
     pub middlename: Option<String>,
     pub lastname: String,
     pub role: String,
-    pub image: String,
+    pub image: Option<String>,
+    pub token_salt: Uuid,
 
     pub create_by: sql::Thing,
     pub create_on: sql::Datetime,

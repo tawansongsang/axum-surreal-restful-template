@@ -11,6 +11,7 @@ use super::{Users, UsersCreated, UsersForCreate, UsersRecord};
 pub struct UsersBmc;
 
 impl UsersBmc {
+    // TODO: fixed get function
     pub async fn get<'de, E>(_ctx: &Ctx, mm: &ModelManager, id: sql::Uuid) -> Result<Option<E>>
     where
         E: DeserializeOwned,
@@ -54,6 +55,7 @@ impl UsersBmc {
         Ok(users_for_auth)
     }
 
+    // TODO: fixed update pwd
     pub async fn update_pwd(
         ctx: &Ctx,
         mm: &ModelManager,

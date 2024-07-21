@@ -1,19 +1,21 @@
 use axum::Router;
 use lib_surrealdb::model::ModelManager;
 
+mod _protected;
 mod login;
 mod logout;
 mod register;
 
-pub fn all_routes(mm: ModelManager) -> Router {
-    let all_routes = Router::new();
-    all_routes
+pub fn routes_all(mm: ModelManager) -> Router {
+    let routes_all = Router::new();
+    routes_all
         .merge(login::route(mm.clone()))
         .merge(register::route(mm.clone()))
-        .merge(logout::route(mm))
+        .merge(logout::route(mm.clone()))
+        .merge(_protected::route(mm))
 }
 
 pub fn route(mm: ModelManager) -> Router {
     let route = Router::new();
-    route.nest("/v1", all_routes(mm))
+    route.nest("/v1", routes_all(mm))
 }

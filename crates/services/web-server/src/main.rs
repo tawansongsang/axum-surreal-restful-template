@@ -34,7 +34,6 @@ async fn main() {
         // .merge(routes_login::routes(mm.clone()))
         // .nest("/api", routes_rpc)
         // .layer(middleware::map_response(mw_response_map))
-        // .layer(middleware::from_fn_with_state(mm.clone(), mw_ctx_resolve))
         .layer(middleware::from_fn(middlewares::mw_req_stamp))
         // .layer(CookieManagerLayer::new())
         .fallback_service(routes::static_file::serve_dir());
