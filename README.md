@@ -15,7 +15,7 @@ docker network create dev-network
 
 create surrealdb container
 ```bash
-docker run --name surreal_template --network dev-network --rm --pull always -p 8000:8000 -v  ./tmp:/container-dir surrealdb/surrealdb:latest start --auth --user root --pass root file:/container-dir/template.db
+docker run --name surreal_template --network dev-network --rm --pull always -p 8000:8000 -v  ./tmp:/container-dir surrealdb/surrealdb:latest start --auth --user root --pass root --log trace file:/container-dir/template.db
 ```
 
 connect to surrealdb

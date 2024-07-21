@@ -1,0 +1,11 @@
+POST http://{{host}}:{{port}}/api/v1/register HTTP/1.1
+Content-Type: application/json
+
+{
+    "username": "demo3@demo.com",
+    "email": "demo3@demo.com",
+    "title": "นางสาว",
+    "firstname": "test_demo_firstname3",
+    "lastname": "test_demo_lastname3",
+    "password": "demo3"
+}
