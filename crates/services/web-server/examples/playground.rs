@@ -1,7 +1,8 @@
-use std::{thread, time};
+use std::{io, thread, time};
 
 use jsonwebtoken::{
-    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
+    decode, decode_header, encode, get_current_timestamp, DecodingKey, EncodingKey, Header,
+    Validation,
 };
 use lib_surrealdb::{
     ctx::Ctx,
@@ -20,8 +21,11 @@ struct Claims {
 
 #[tokio::main]
 async fn main() {
+    let mut sub = String::new();
+    io::stdin().read_line(&mut sub).unwrap();
+    let sub = sub.trim_end().to_string();
+    println!("{}.", sub);
     let mm = ModelManager::new().await.unwrap();
-    let sub = String::from("iR1f8i7Wg7jipR3uhDhJ");
     let ctx = Ctx::root_ctx();
     let user = UsersBmc::first_by_id::<UsersGet>(&ctx, &mm, sub.as_str())
         .await
@@ -33,9 +37,14 @@ async fn main() {
     let current_time = get_current_timestamp() as usize;
     println!("{}", current_time);
     let exp: usize = current_time;
-    let claim = Claims { sub, exp };
+    let claim = Claims {
+        sub: sub.clone(),
+        exp,
+    };
+    let mut headers = Header::default();
+    headers.kid = Some(sub);
     let token = encode(
-        &Header::default(),
+        &headers,
         &claim,
         &EncodingKey::from_secret(token_salt.as_ref()),
     )
@@ -45,10 +54,19 @@ async fn main() {
 
     // let sleep_duration = time::Duration::from_secs(61);
     // thread::sleep(sleep_duration);
+    let headers = decode_header(&token).unwrap();
+    println!("{:?}", headers);
+    let user_id = headers.kid.unwrap();
+    let ctx = Ctx::root_ctx();
+    let user = UsersBmc::first_by_id::<UsersGet>(&ctx, &mm, user_id.as_str())
+        .await
+        .unwrap()
+        .unwrap();
+    let token_salt = user.token_salt.to_string();
 
     let token = decode::<Claims>(
         &token,
-        &DecodingKey::from_secret("36ee060e-20a7-4a42-8bd1-0cbd704a29a2".as_ref()),
+        &DecodingKey::from_secret(token_salt.as_ref()),
         &Validation::default(),
     )
     .unwrap();
