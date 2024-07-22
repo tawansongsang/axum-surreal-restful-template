@@ -2,7 +2,6 @@ pub mod bmc;
 
 use serde::{Deserialize, Serialize};
 use surrealdb::sql;
-use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 pub struct Users {
@@ -17,8 +16,8 @@ pub struct Users {
 
     // -- pwd and token info
     pub password: String,
-    pub password_salt: Uuid,
-    pub token_salt: Uuid,
+    pub password_salt: sql::Uuid,
+    pub token_salt: sql::Uuid,
 
     pub image: Option<String>,
     pub role: String,
@@ -40,7 +39,7 @@ pub struct UsersGet {
     pub lastname: String,
     pub role: String,
     pub image: Option<String>,
-    pub token_salt: Uuid,
+    pub token_salt: sql::Uuid,
 
     pub create_by: sql::Thing,
     pub create_on: sql::Datetime,
@@ -70,6 +69,7 @@ pub struct UsersCreated<'a> {
     pub middlename: Option<String>,
     pub lastname: String,
     pub password: String,
+    pub password_salt: sql::Uuid,
     pub create_by: &'a Option<sql::Thing>,
     pub update_by: &'a Option<sql::Thing>,
 }
@@ -83,8 +83,8 @@ pub struct UsersForLogin {
     pub middlename: Option<String>,
     pub lastname: String,
     pub password: Option<String>, // encrypted, #_scheme_id_#....
-    pub password_salt: Uuid,
-    pub token_salt: Uuid,
+    pub password_salt: sql::Uuid,
+    pub token_salt: sql::Uuid,
     pub role: String,
 }
 
@@ -94,7 +94,7 @@ pub struct UsersForAuth {
     pub username: String,
 
     // -- token info
-    pub token_salt: Uuid,
+    pub token_salt: sql::Uuid,
 }
 
 #[derive(Debug, Deserialize)]

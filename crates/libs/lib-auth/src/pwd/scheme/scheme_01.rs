@@ -19,7 +19,7 @@ impl Scheme for Scheme01 {
         if raw_pwd_new == raw_pwd_ref {
             Ok(())
         } else {
-            Err(Error::PwdValidate)
+            Err(Error::PwdInValidate)
         }
     }
 }

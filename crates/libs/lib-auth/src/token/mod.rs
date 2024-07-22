@@ -1,4 +1,5 @@
 mod error;
+pub mod jwt;
 
 use std::{fmt::Display, str::FromStr};
 
@@ -13,6 +14,7 @@ use uuid::Uuid;
 use crate::config::auth_config;
 
 pub use self::error::{Error, Result};
+pub use self::jwt::*;
 
 /// String format: `ident_b65u.ex_b64u.sign_b64u`
 #[derive(Debug)]

@@ -1,4 +1,5 @@
 use axum::{extract::State, routing::post, Json, Router};
+use lib_auth::{pwd, token};
 use lib_surrealdb::{
     ctx::Ctx,
     model::{
@@ -40,22 +41,33 @@ async fn api_login_handler(
         .ok_or(Error::LoginFailUsernameNotFound)?;
 
     let user_id = user.id.id.to_raw();
+    let token_salt = user.token_salt;
 
     // -- Validate the password.
     let Some(hash) = user.password else {
         return Err(Error::LoginFailUserHasNoPwd { user_id });
     };
 
-    let scheme_status = UsersBmc::validate_password(&mm, &hash, &password).await?;
+    let to_hash = pwd::ContentToHash::new(password, uuid::Uuid::from(user.password_salt));
 
-    if !scheme_status {
-        return Err(Error::LoginFailPwdNotMatching { user_id });
-    }
+    let _scheme_status =
+        pwd::validate_pwd(to_hash, hash)
+            .await
+            .map_err(|_| Error::LoginFailPwdNotMatching {
+                user_id: user_id.clone(),
+            })?;
+
+    // -- Update password scheme if needed
+    // if let SchemeStatus::Outdated = scheme_status {
+    //     debug!("pwd encrypt scheme outdated, upgrading.");
+    //     UserBmc::update_pwd(&root_ctx, &mm, user.id, &pwd_clear).await?;
+    // }
 
     // -- Set web token if not send back token via body
     // web::set_token_cookie(&cookies, &user_id, user.token_salt)?;
 
     // -- Generate toekn if not use cookie
+    let jwt = token::encode_jwt(user_id.as_str(), token_salt.as_ref())?;
 
     // -- Create the success body
     let body = Json(json!({
@@ -72,7 +84,7 @@ async fn api_login_handler(
             "role": user.role,
             "image": null,
         },
-        "token": "token"
+        "jwt": jwt
     }));
 
     Ok(body)

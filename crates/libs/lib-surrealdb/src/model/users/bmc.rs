@@ -1,5 +1,8 @@
+use lib_auth::pwd::{self, ContentToHash};
 use serde::de::DeserializeOwned;
 use surrealdb::sql;
+use tracing::debug;
+use uuid::Uuid;
 
 use crate::{
     ctx::Ctx,
@@ -96,6 +99,12 @@ impl UsersBmc {
 
         let db = mm.db();
 
+        let password_salt = sql::Uuid::new_v4();
+
+        // -- Hashing Password
+        let to_hash = ContentToHash::new(users_for_create.password, Uuid::from(password_salt));
+        let password_hash = pwd::hash_pwd(to_hash).await?;
+
         let user_id_create = ctx.user_id_thing();
 
         let users_created = UsersCreated {
@@ -105,7 +114,8 @@ impl UsersBmc {
             firstname: users_for_create.firstname,
             middlename: users_for_create.middlename,
             lastname: users_for_create.lastname,
-            password: users_for_create.password,
+            password: password_hash,
+            password_salt,
             create_by: &user_id_create,
             update_by: &user_id_create,
         };
@@ -117,20 +127,24 @@ impl UsersBmc {
         Ok(users)
     }
 
-    pub async fn validate_password(mm: &ModelManager, hash: &str, password: &str) -> Result<bool> {
-        let db = mm.db();
+    pub async fn validate_password(
+        password: String,
+        password_salt: Uuid,
+        hash: String,
+    ) -> Result<()> {
+        debug!("{} - hash", hash);
+        debug!("{} - pass", password);
 
-        let sql = "RETURN crypto::argon2::compare($hash, $pass)";
+        let to_hash = ContentToHash::new(password, password_salt);
 
-        let mut result = db
-            .query(sql)
-            .bind(("hash", hash))
-            .bind(("pass", password))
-            .await?;
+        let _scheme_status = pwd::validate_pwd(to_hash, hash).await?;
 
-        result
-            .take::<Option<bool>>(0)?
-            .ok_or(Error::CannotComparePasswordFromDB)
+        // -- Update password scheme if needed
+        // if let SchemeStatus::Outdated = scheme_status {
+        //     debug!("pwd encrypt scheme outdated, upgrading.");
+        //     UserBmc::update_pwd(&root_ctx, &mm, user.id, &pwd_clear).await?;
+        // }
+        Ok(())
     }
 
     pub async fn validate_username(mm: &ModelManager, username: &str) -> Result<bool> {

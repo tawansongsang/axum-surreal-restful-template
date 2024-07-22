@@ -20,6 +20,12 @@ pub struct ContentToHash {
     pub content: String, // Clear content.
     pub salt: Uuid,
 }
+
+impl ContentToHash {
+    pub fn new(content: String, salt: Uuid) -> Self {
+        ContentToHash { content, salt }
+    }
+}
 // endregion: --- Types
 
 /// Hash the password with the default scheme.
@@ -49,17 +55,17 @@ pub async fn validate_pwd(to_hash: ContentToHash, pwd_ref: String) -> Result<Sch
         .await
         .map_err(|_| Error::FailSpawnBlockForValidate)??;
 
-    // validate_for_scheme(&scheme_name, to_hash_ &hashed).await?;
+    // validate_for_scheme(&scheme_name, to_hash, hashed)?;
     Ok(scheme_status)
 }
 
 fn validate_for_scheme(scheme_name: &str, to_hash: ContentToHash, pwd_ref: String) -> Result<()> {
-    let _ = get_scheme(scheme_name)?.validate(&to_hash, &pwd_ref);
+    let _ = get_scheme(scheme_name)?.validate(&to_hash, &pwd_ref)?;
     Ok(())
 }
 
 fn hash_for_scheme(scheme_name: &str, to_hash: ContentToHash) -> Result<String> {
-    let pwd_hashed = get_scheme(scheme_name)?.hash(&to_hash).unwrap();
+    let pwd_hashed = get_scheme(scheme_name)?.hash(&to_hash)?;
 
     Ok(format!("#{scheme_name}#{pwd_hashed}"))
 }
@@ -94,7 +100,7 @@ mod tests {
     use anyhow::Result;
 
     #[tokio::test]
-    async fn test_multi_scheme_ok() -> Result<()> {
+    async fn test_multi_scheme_outdated() -> Result<()> {
         // -- Setup & Fixtures
         let fx_salt = Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?;
         let fx_to_hash = ContentToHash {
@@ -111,6 +117,45 @@ mod tests {
             matches!(pwd_validate, SchemeStatus::Outdated),
             "status should be SchemeStatus::Outdated"
         );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_multi_scheme_valid_content_ok() -> Result<()> {
+        // -- Setup & Fixtures
+        let fx_salt = Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?;
+        let fx_to_hash = ContentToHash {
+            content: "hello world".to_string(),
+            salt: fx_salt,
+        };
+        let fx_pwd_ref = "#02#$argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$TaRnmmbDdQ1aTzk2qQ2yQzPQoZfnKqhrfuTH/TRP5V4".to_string();
+
+        // -- Exec
+        let pwd_validate = validate_pwd(fx_to_hash.clone(), fx_pwd_ref).await?;
+
+        // -- Check
+        assert!(matches!(pwd_validate, SchemeStatus::Ok));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_multi_scheme_invalid_content() -> Result<()> {
+        // -- Setup & Fixtures
+        let fx_salt = Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?;
+        let fx_to_hash = ContentToHash {
+            content: "hello world2".to_string(), // hello world
+            salt: fx_salt,
+        };
+        let fx_pwd_ref = "#02#$argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$TaRnmmbDdQ1aTzk2qQ2yQzPQoZfnKqhrfuTH/TRP5V4".to_string();
+
+        // -- Exec
+        let _pwd_hashed = hash_for_scheme("02", fx_to_hash.clone())?;
+        let pwd_validate = validate_pwd(fx_to_hash.clone(), fx_pwd_ref).await.is_err();
+
+        // -- Check
+        assert!(pwd_validate);
 
         Ok(())
     }

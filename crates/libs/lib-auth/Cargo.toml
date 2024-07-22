@@ -11,9 +11,11 @@ argon2 = { version = "0.5.3", features = ["std"] }
 derive_more = "0.99.18"
 enum_dispatch = "0.3.13"
 hmac = "0.12.1"
+jsonwebtoken = "9.3.0"
 lazy-regex = "3.1.0"
 lib-utils = { version = "0.1.0", path = "../lib-utils" }
 serde = { version = "1.0.204", features = ["derive"] }
+serde_with = "3.9.0"
 sha2 = "0.10.8"
 tokio = { version = "1.38.0", features = ["macros", "rt"] }
 uuid = "1.9.1"

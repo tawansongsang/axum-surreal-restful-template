@@ -31,7 +31,7 @@ impl Scheme for Scheme02 {
 
         argon2
             .verify_password(to_hash.content.as_bytes(), &parsed_hash_ref)
-            .map_err(|_| Error::PwdValidate)
+            .map_err(|_| Error::PwdInValidate)
     }
 }
 
@@ -42,8 +42,8 @@ fn get_argon2() -> &'static Argon2<'static> {
         let key = &auth_config().PWD_KEY;
         Argon2::new_with_secret(
             key,
-            Algorithm::Argon2id, // Same as Argon::default()
-            Version::V0x13,      // Same as Argon2::default()
+            Algorithm::default(),
+            Version::default(),
             Params::default(),
         )
         .unwrap() // TODO: needs to fail early
@@ -73,6 +73,106 @@ mod tests {
 
         // -- Check
         assert_eq!(res, fx_res);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_scheme_02_hash_into_b64u_wrong_pass() -> Result<()> {
+        // -- Setup & Fixtures
+        let fx_to_hash = ContentToHash {
+            // content: "hello world2".to_string(), // this is correct.
+            content: "hello world2".to_string(),
+            salt: Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?,
+        };
+        let fx_res = "$argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$TaRnmmbDdQ1aTzk2qQ2yQzPQoZfnKqhrfuTH/TRP5V4";
+
+        // -- Exec
+        let scheme = Scheme02;
+        // $argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$6bZW7re4W2G4rmxVI+9TttSmnU9zSO35K7UsEnMhe10
+        let res = scheme.hash(&fx_to_hash)?;
+
+        // -- Check
+        assert_ne!(res, fx_res);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_scheme_02_hash_into_b64u_wrong_salt() -> Result<()> {
+        // -- Setup & Fixtures
+        let fx_to_hash = ContentToHash {
+            content: "hello world".to_string(),
+            // salt: Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?, // this is correct uuid
+            salt: Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5451")?,
+        };
+        let fx_res = "$argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$TaRnmmbDdQ1aTzk2qQ2yQzPQoZfnKqhrfuTH/TRP5V4";
+
+        // -- Exec
+        let scheme = Scheme02;
+        // $argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUQ$PAJGAasj0uAw82Kl9PvuIAGC6CS0NAZrBNYMxF0eLQo
+        let res = scheme.hash(&fx_to_hash)?;
+
+        // -- Check
+        assert_ne!(res, fx_res);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_scheme_02_validate_ok() -> Result<()> {
+        // -- Setup & Fixtures
+        let fx_to_hash = ContentToHash {
+            content: "hello world".to_string(),
+            salt: Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?,
+        };
+        let fx_pass_ref = "$argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$TaRnmmbDdQ1aTzk2qQ2yQzPQoZfnKqhrfuTH/TRP5V4";
+
+        // -- Exec
+        let scheme = Scheme02;
+        let res = scheme.validate(&fx_to_hash, &fx_pass_ref);
+
+        // -- Check
+        assert!(res.is_ok());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_scheme_02_validate_wrong_pass_ref() -> Result<()> {
+        // -- Setup & Fixtures
+        let fx_to_hash = ContentToHash {
+            content: "hello world".to_string(),
+            salt: Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?,
+        };
+        let fx_pass_ref = "$argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$TaRnmmbDdQ1aTzk2qQ2yQzPQoZfnKqhrfuTH/TRP5V4";
+
+        // -- Exec
+        let scheme = Scheme02;
+        let res = scheme.validate(&fx_to_hash, &fx_pass_ref);
+
+        // -- Check
+        assert!(res.is_ok());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_scheme_02_validate_wrong_content() -> Result<()> {
+        // -- Setup & Fixtures
+        let fx_to_hash = ContentToHash {
+            // content: "hello world".to_string(),
+            content: "hello world2".to_string(),
+            salt: Uuid::parse_str("f05e8961-d6ad-4086-9e78-a6de065e5453")?,
+        };
+        let fx_pass_ref = "$argon2id$v=19$m=19456,t=2,p=1$8F6JYdatQIaeeKbeBl5UUw$TaRnmmbDdQ1aTzk2qQ2yQzPQoZfnKqhrfuTH/TRP5V4";
+
+        // -- Exec
+        let scheme = Scheme02;
+        let res = scheme.validate(&fx_to_hash, &fx_pass_ref);
+
+        // -- Check
+        assert!(res.is_err());
 
         Ok(())
     }

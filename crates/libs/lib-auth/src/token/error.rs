@@ -1,8 +1,11 @@
+use derive_more::From;
 use serde::Serialize;
+use serde_with::{serde_as, DisplayFromStr};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize)]
+#[serde_as]
+#[derive(Debug, Serialize, From, PartialEq)]
 pub enum Error {
     HmacFailNewFromSlice,
 
@@ -13,8 +16,14 @@ pub enum Error {
     ExpNotIso,
     Expired,
 
+    JwtNoKid,
+
     // -- Modules
     InvalidDuration(String),
+
+    // -- Externals
+    #[from]
+    JsonWebToken(#[serde_as(as = "DisplayFromStr")] jsonwebtoken::errors::Error),
 }
 
 // region:    --- Error Boilerplate

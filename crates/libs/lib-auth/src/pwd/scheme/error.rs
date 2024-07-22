@@ -5,7 +5,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Serialize)]
 pub enum Error {
     Key,
-    PwdValidate,
+    PwdInValidate,
     Salt,
     Hash,
     SchemeNotFound(String),

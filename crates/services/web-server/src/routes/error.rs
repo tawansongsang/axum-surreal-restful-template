@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::routes;
 use axum::{http::StatusCode, response::IntoResponse};
 use derive_more::From;
-// use lib_auth::{pwd, token};
+use lib_auth::{pwd, token};
 use lib_surrealdb::model;
 use serde::Serialize;
 use serde_with::{serde_as, DisplayFromStr};
@@ -32,8 +32,8 @@ pub enum Error {
     Model(model::Error),
     // #[from]
     // Pwd(pwd::Error),
-    // #[from]
-    // Token(token::Error),
+    #[from]
+    Token(token::Error),
     // #[from]
     // Rpc(lib_rpc::Error),
 

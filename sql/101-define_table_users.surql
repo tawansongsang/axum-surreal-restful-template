@@ -12,9 +12,9 @@ DEFINE FIELD title ON TABLE users TYPE string ASSERT $value INSIDE ['นาย',
 DEFINE FIELD firstname ON TABLE users TYPE string;
 DEFINE FIELD middlename ON TABLE users TYPE option<string>;
 DEFINE FIELD lastname ON TABLE users TYPE string;
-DEFINE FIELD password ON TABLE users TYPE string VALUE crypto::argon2::generate($value);
-DEFINE FIELD password_salt ON TABLE users TYPE string DEFAULT rand::uuid::v4();
-DEFINE FIELD token_salt ON TABLE users TYPE string DEFAULT rand::uuid::v4();
+DEFINE FIELD password ON TABLE users TYPE string;
+DEFINE FIELD password_salt ON TABLE users TYPE uuid DEFAULT rand::uuid::v4();
+DEFINE FIELD token_salt ON TABLE users TYPE uuid DEFAULT rand::uuid::v4();
 DEFINE FIELD role ON TABLE users TYPE string DEFAULT 'USER' ASSERT $value INSIDE ['USER', 'ADMIN'];
 DEFINE FIELD image ON TABLE users TYPE option<string>;
 DEFINE FIELD create_by ON TABLE users TYPE option<record<users>>;

@@ -1,5 +1,6 @@
 use super::store;
 use derive_more::From;
+use lib_auth::pwd;
 use serde::Serialize;
 use serde_with::{serde_as, DisplayFromStr};
 
@@ -17,7 +18,6 @@ pub enum Error {
         actual: i64,
     },
 
-    CannotComparePasswordFromDB,
     CannotValidateUsernameFromDB,
     CannotParseStrToDatetime(String),
     CannotParseStrToThing(String),
@@ -30,8 +30,8 @@ pub enum Error {
     UsernameNotValidFormat,
 
     // -- Modules
-    // #[from]
-    // Pwd(pwd::Error),
+    #[from]
+    Pwd(pwd::Error),
     #[from]
     Store(store::Error),
 
