@@ -7,7 +7,7 @@ use lazy_regex::regex_captures;
 use uuid::Uuid;
 
 pub use self::error::{Error, Result};
-use self::scheme::{get_scheme, Scheme, SchemeStatus, DEFAULT_SCHEME};
+pub use self::scheme::{get_scheme, Scheme, SchemeStatus, DEFAULT_SCHEME};
 
 // region:    --- Types
 /// The clean content to hash, with the salt.

@@ -1,5 +1,8 @@
 use axum::{extract::State, routing::post, Json, Router};
-use lib_auth::{pwd, token};
+use lib_auth::{
+    pwd::{self, SchemeStatus},
+    token,
+};
 use lib_surrealdb::{
     ctx::Ctx,
     model::{
@@ -48,9 +51,11 @@ async fn api_login_handler(
         return Err(Error::LoginFailUserHasNoPwd { user_id });
     };
 
-    let to_hash = pwd::ContentToHash::new(password, uuid::Uuid::from(user.password_salt));
+    let password_salt_uuid = uuid::Uuid::from(user.password_salt);
 
-    let _scheme_status =
+    let to_hash = pwd::ContentToHash::new(password.clone(), password_salt_uuid);
+
+    let scheme_status =
         pwd::validate_pwd(to_hash, hash)
             .await
             .map_err(|_| Error::LoginFailPwdNotMatching {
@@ -58,10 +63,10 @@ async fn api_login_handler(
             })?;
 
     // -- Update password scheme if needed
-    // if let SchemeStatus::Outdated = scheme_status {
-    //     debug!("pwd encrypt scheme outdated, upgrading.");
-    //     UserBmc::update_pwd(&root_ctx, &mm, user.id, &pwd_clear).await?;
-    // }
+    if let SchemeStatus::Outdated = scheme_status {
+        debug!("pwd encrypt scheme outdated, upgrading.");
+        UsersBmc::update_pwd(&root_ctx, &mm, user.id, &password, password_salt_uuid).await?;
+    }
 
     // -- Set web token if not send back token via body
     // web::set_token_cookie(&cookies, &user_id, user.token_salt)?;

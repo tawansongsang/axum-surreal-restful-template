@@ -62,16 +62,21 @@ impl UsersBmc {
     pub async fn update_pwd(
         ctx: &Ctx,
         mm: &ModelManager,
-        id: sql::Uuid,
+        id: sql::Thing,
         password: &str,
+        password_salt: Uuid,
     ) -> Result<()> {
         let db = mm.db();
+        // -- Hashing Password
+        let to_hash = ContentToHash::new(password.to_string(), password_salt);
+        let password_hash = pwd::hash_pwd(to_hash).await?;
+
         let sql =
-            "UPDATE ONLY users:&id SET password = &password update_by = users:&update_by update_on = time::now();";
+            "UPDATE ONLY users:&id SET password = &password_hash update_by = users:&update_by update_on = time::now();";
         let mut result = db
             .query(sql)
             .bind(("id", id))
-            .bind(("password", password))
+            .bind(("password_hash", password_hash))
             .bind(("update_by", ctx.user_id()))
             .await?;
 

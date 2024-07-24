@@ -1,8 +1,10 @@
 use async_trait::async_trait;
+use axum_extra::headers::Authorization;
+use lib_auth::token;
 use lib_surrealdb::{
     ctx::Ctx,
     model::{
-        users::{bmc::UsersBmc, UsersForAuth},
+        users::{bmc::UsersBmc, UsersForAuth, UsersGet},
         ModelManager,
     },
 };
@@ -25,21 +27,52 @@ pub async fn mw_ctx_resolve(
     next: Next,
 ) -> Result<Response> {
     debug!("{:<12} - mw_ctx_resolve {:?}", "MIDDLEWARE", headers);
+    let mut authorization = headers
+        .get("Authorization")
+        .ok_or(Error::NoAuthorizationHeader)?
+        .to_str()
+        .map_err(|_| Error::CannotConvertAuthorizationToStr)?
+        .split_whitespace();
+    let _bearer = authorization
+        .next()
+        .ok_or(Error::NoAuthorizationBearer)
+        .map(|b| {
+            if b.eq("Bearer") {
+                return Ok(());
+            } else {
+                return Err(Error::NoAuthorizationBearer);
+            }
+        })??;
+    let token = authorization.next().ok_or(Error::InvalidBearerToken)?;
 
-    // let ctx_ext_result = inner_ctx_resolve(mm, &cookies).await;
+    debug!("{:<12} - mw_ctx_resolve {:?}", "MIDDLEWARE", token);
 
-    // if ctx_ext_result.is_err() && !matches!(ctx_ext_result, Err(CtxExtError::TokenNotInCookie)) {
-    //     cookies.remove(Cookie::from(AUTH_TOKEN))
-    // }
+    let ctx_ext_result = inner_ctx_resolve(mm, token).await;
 
     // -- Store the ctx_ext_result in the request extension
     // (for Ctx extractor)
 
-    // let _ctxw = req.extensions_mut().insert(ctx_ext_result);
+    // TODO: Fixed error implement clone struct for extension_mut.insert
+    let _ctx = req.extensions_mut().insert(ctx_ext_result);
 
     let response = next.run(req).await;
 
     Ok(response)
+}
+
+async fn inner_ctx_resolve(mm: State<ModelManager>, token: &str) -> Result<CtxW> {
+    let user_id = token::decode_kid_from_jwt_headers(token)?;
+    let _ctx = Ctx::root_ctx();
+    let user = UsersBmc::first_by_id::<UsersGet>(&_ctx, &mm, &user_id.as_str())
+        .await?
+        .ok_or(Error::InvalidJwtTokenHeader)?;
+
+    let token_salt = user.token_salt.as_ref();
+    let sub = token::decode_sub_from_jwt(token, token_salt)?;
+    let ctxw = Ctx::new(Some(sub))
+        .map_err(|_| Error::CannotCreateCtxFromJwt)
+        .map(CtxW);
+    ctxw
 }
 
 // async fn inner_ctx_resolve(mm: State<ModelManager>, cookies: &Cookies) -> CtxExtResult {
@@ -73,9 +106,9 @@ pub async fn mw_ctx_resolve(
 //         .map_err(|ex| CtxExtError::CtxCreateFail(ex.to_string()))
 // }
 
-// // region:    --- Ctx Extractor
-// #[derive(Debug, Clone)]
-// pub struct CtxW(pub Ctx);
+// region:    --- Ctx Extractor
+#[derive(Debug, Clone)]
+pub struct CtxW(pub Ctx);
 
 // #[async_trait]
 // impl<S: Send + Sync> FromRequestParts<S> for CtxW {

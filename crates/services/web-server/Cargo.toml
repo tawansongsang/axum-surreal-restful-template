@@ -20,6 +20,7 @@ tower-http = { version = "0.5.2", features = ["fs"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 uuid = "1.10.0"
+axum-extra = { version = "0.9.3", features = ["typed-header"] }
 
 [lints]
 workspace = true

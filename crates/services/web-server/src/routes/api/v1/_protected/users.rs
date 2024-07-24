@@ -20,8 +20,8 @@ async fn api_get_users_handler() -> Result<Json<Value>> {
 
     // -- Create the success body.
     let body = Json(json!({
-        "resutl": {
-            "authentication": true
+        "result": {
+            "authorization": true
         }
     }));
 
@@ -33,8 +33,8 @@ async fn api_create_user_handler() -> Result<Json<Value>> {
 
     // -- Create the success body.
     let body = Json(json!({
-        "resutl": {
-            "authentication": true
+        "result": {
+            "authorization": true
         }
     }));
 
