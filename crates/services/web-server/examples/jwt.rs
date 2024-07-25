@@ -1,4 +1,4 @@
-use std::{io, thread, time};
+use std::io;
 
 use lib_auth::jsonwebtoken::{
     decode, decode_header, encode, get_current_timestamp, DecodingKey, EncodingKey, Header,

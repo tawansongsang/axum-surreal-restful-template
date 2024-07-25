@@ -1,6 +1,6 @@
 use std::sync::OnceLock;
 
-use lib_utils::envs::{get_env, get_env_parse};
+use lib_utils::envs::get_env;
 
 pub fn web_config() -> &'static WebConfig {
     static INSTANCE: OnceLock<WebConfig> = OnceLock::new();
