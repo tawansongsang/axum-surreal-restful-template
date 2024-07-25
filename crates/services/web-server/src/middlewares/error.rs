@@ -2,8 +2,6 @@ use std::sync::Arc;
 
 use axum::{http::StatusCode, response::IntoResponse};
 use derive_more::From;
-use lib_auth::token;
-use lib_surrealdb::model::{self};
 use serde::Serialize;
 use serde_with::serde_as;
 use tracing::debug;
@@ -23,13 +21,12 @@ pub enum Error {
     CannotConvertAuthorizationToStr,
     InvalidBearerToken,
 
-    // -- JWT
-    InvalidJwtTokenHeader,
-    CannotCreateCtxFromJwt,
-
+    // -- CtxExtError
+    #[from]
+    CtxExt(super::auth::CtxExtError),
     // -- Modules
-    Token(token::Error),
-    Model(model::Error),
+    // Token(token::Error),
+    // Model(model::Error),
 }
 
 // region:    --- Axum IntoResponse

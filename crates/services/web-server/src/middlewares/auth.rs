@@ -1,10 +1,9 @@
 use async_trait::async_trait;
-use axum_extra::headers::Authorization;
 use lib_auth::token;
 use lib_surrealdb::{
     ctx::Ctx,
     model::{
-        users::{bmc::UsersBmc, UsersForAuth, UsersGet},
+        users::{bmc::UsersBmc, UsersGet},
         ModelManager,
     },
 };
@@ -51,97 +50,65 @@ pub async fn mw_ctx_resolve(
 
     // -- Store the ctx_ext_result in the request extension
     // (for Ctx extractor)
-
-    // TODO: Fixed error implement clone struct for extension_mut.insert
-    let _ctx = req.extensions_mut().insert(ctx_ext_result);
+    let _ctxw = req.extensions_mut().insert(ctx_ext_result);
 
     let response = next.run(req).await;
 
     Ok(response)
 }
 
-async fn inner_ctx_resolve(mm: State<ModelManager>, token: &str) -> Result<CtxW> {
-    let user_id = token::decode_kid_from_jwt_headers(token)?;
+async fn inner_ctx_resolve(mm: State<ModelManager>, token: &str) -> CtxExtResult {
+    let user_id = token::decode_kid_from_jwt_headers(token)
+        .map_err(|_| CtxExtError::InvalidJwtTokenHeader)?;
     let _ctx = Ctx::root_ctx();
     let user = UsersBmc::first_by_id::<UsersGet>(&_ctx, &mm, &user_id.as_str())
-        .await?
-        .ok_or(Error::InvalidJwtTokenHeader)?;
+        .await
+        .map_err(|e| CtxExtError::ModelAccessError(e.to_string()))?
+        .ok_or(CtxExtError::UserNotFound)?;
 
     let token_salt = user.token_salt.as_ref();
-    let sub = token::decode_sub_from_jwt(token, token_salt)?;
+    let sub = token::decode_sub_from_jwt(token, token_salt)
+        .map_err(|e| CtxExtError::JwtDecodeError(e.to_string()))?;
     let ctxw = Ctx::new(Some(sub))
-        .map_err(|_| Error::CannotCreateCtxFromJwt)
+        .map_err(|_| CtxExtError::CannotCreateCtxFromJwt)
         .map(CtxW);
     ctxw
 }
-
-// async fn inner_ctx_resolve(mm: State<ModelManager>, cookies: &Cookies) -> CtxExtResult {
-//     // -- Get Token String
-//     let token = cookies
-//         .get(AUTH_TOKEN)
-//         .map(|c| c.value().to_string())
-//         .ok_or(CtxExtError::TokenNotInCookie)?;
-
-//     // -- Parse Token
-//     let token: Token = token.parse().map_err(|_| CtxExtError::TokenWrongFormat)?;
-
-//     // -- Get UserInfoForAuth
-//     let user = UserInfoBmc::first_by_id::<UserInfoForAuth>(&Ctx::root_ctx(), &mm, &token.ident)
-//         .await
-//         .map_err(|ex| CtxExtError::ModelAccessError(ex.to_string()))?;
-
-//     let user = user.ok_or(CtxExtError::UserNotFound)?;
-
-//     // -- Validate Token
-//     validate_web_token(&token, user.token_salt).map_err(|_| CtxExtError::FailValidate)?;
-
-//     // -- Update Token
-//     let user_id = &user.id.id.to_raw();
-//     set_token_cookie(cookies, user_id, user.token_salt)
-//         .map_err(|_| CtxExtError::CannotSetTokenCookie)?;
-
-//     // -- Create CtxExtResult
-//     Ctx::new(Some(user.id.to_raw()))
-//         .map(CtxW)
-//         .map_err(|ex| CtxExtError::CtxCreateFail(ex.to_string()))
-// }
 
 // region:    --- Ctx Extractor
 #[derive(Debug, Clone)]
 pub struct CtxW(pub Ctx);
 
-// #[async_trait]
-// impl<S: Send + Sync> FromRequestParts<S> for CtxW {
-//     type Rejection = Error;
+#[async_trait]
+impl<S: Send + Sync> FromRequestParts<S> for CtxW {
+    type Rejection = Error;
 
-//     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
-//         debug!("{:<12} - Ctx", "EXTRACTOR");
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
+        debug!("{:<12} - Ctx", "EXTRACTOR");
 
-//         let part = parts
-//             .extensions
-//             .get::<CtxExtResult>()
-//             .ok_or(Error::CtxExt(CtxExtError::CtxNotInRequestExt))?
-//             .clone()
-//             .map_err(Error::CtxExt);
+        let part = parts
+            .extensions
+            .get::<CtxExtResult>()
+            .ok_or(Error::CtxExt(CtxExtError::CtxNotInRequestExt))?
+            .clone()
+            .map_err(Error::CtxExt);
 
-//         part
-//     }
-// }
-// // endregion: --- Ctx Extractor
+        part
+    }
+}
+// endregion: --- Ctx Extractor
 
-// // region:    --- Ctx Extractor Result/Error
-// type CtxExtResult = std::result::Result<CtxW, CtxExtError>;
+// region:    --- Ctx Extractor Result/Error
+type CtxExtResult = std::result::Result<CtxW, CtxExtError>;
 
-// #[derive(Debug, Serialize, Clone)]
-// pub enum CtxExtError {
-//     TokenNotInCookie,
-//     TokenWrongFormat,
+#[derive(Debug, Serialize, Clone)]
+pub enum CtxExtError {
+    JwtDecodeError(String),
+    InvalidJwtTokenHeader,
+    CannotCreateCtxFromJwt,
 
-//     ModelAccessError(String),
-//     UserNotFound,
-//     FailValidate,
-//     CannotSetTokenCookie,
-//     CtxCreateFail(String),
-//     CtxNotInRequestExt,
-// }
-// // endregion: --- Ctx Extractor Result/Error
+    ModelAccessError(String),
+    UserNotFound,
+    CtxNotInRequestExt,
+}
+// endregion: --- Ctx Extractor Result/Error

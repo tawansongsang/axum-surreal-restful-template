@@ -6,6 +6,7 @@ use lib_surrealdb::model::ModelManager;
 use serde_json::{json, Value};
 use tracing::debug;
 
+use crate::middlewares::auth::CtxW;
 use crate::routes::Result;
 
 pub fn route(mm: ModelManager) -> Router {
@@ -15,8 +16,10 @@ pub fn route(mm: ModelManager) -> Router {
 }
 
 // region:    --- Users
-async fn api_get_users_handler() -> Result<Json<Value>> {
+async fn api_get_users_handler(ctxw: CtxW) -> Result<Json<Value>> {
     debug!("{:<12} - api_get_users_handler", "HANLDER");
+    let ctx = ctxw.0;
+    debug!("{:<12} - api_get_users_handler {:?}", "HANDLER", ctx);
 
     // -- Create the success body.
     let body = Json(json!({
