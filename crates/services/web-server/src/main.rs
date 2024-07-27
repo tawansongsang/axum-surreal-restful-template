@@ -1,4 +1,6 @@
 mod config;
+mod error;
+mod log;
 mod middlewares;
 mod routes;
 
@@ -8,6 +10,8 @@ use tokio::net::TcpListener;
 // use tokio::net::TcpListener;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
+
+pub use error::Result;
 
 #[tokio::main]
 async fn main() {
@@ -33,7 +37,7 @@ async fn main() {
         .merge(routes::route(mm.clone()))
         // .merge(routes_login::routes(mm.clone()))
         // .nest("/api", routes_rpc)
-        // .layer(middleware::map_response(mw_response_map))
+        .layer(middleware::map_response(middlewares::mw_response_map))
         .layer(middleware::from_fn(middlewares::mw_req_stamp))
         // .layer(CookieManagerLayer::new())
         .fallback_service(routes::static_file::serve_dir());

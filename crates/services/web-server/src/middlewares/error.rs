@@ -6,6 +6,8 @@ use serde::Serialize;
 use serde_with::serde_as;
 use tracing::debug;
 
+use crate::routes::ClientError;
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[serde_as]
@@ -32,7 +34,7 @@ pub enum Error {
 // region:    --- Axum IntoResponse
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        debug!("{:<12} - web::Error {self:?}", "INTO_RES");
+        debug!("{:<12} - middlewares::Error {self:?}", "INTO_RES");
 
         // -- Create a placeholder Axum response.
         let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
@@ -54,3 +56,28 @@ impl std::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 // endregion: --- Error Boilerplate
+
+impl Error {
+    pub fn client_status_and_error_middlewares(&self) -> (StatusCode, ClientError) {
+        use super::Error::*;
+        match self {
+            // -- Headers
+            NoAuthorizationBearer
+            | NoAuthorizationHeader
+            | CannotConvertAuthorizationToStr
+            | InvalidBearerToken => (
+                StatusCode::FORBIDDEN,
+                ClientError::INVALID_AUTHORIZATION_HEADER,
+            ),
+
+            // -- Auth
+            CtxExt(_) => (StatusCode::FORBIDDEN, ClientError::NO_AUTH),
+
+            // -- Fallback,
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ClientError::SERVICE_ERROR,
+            ),
+        }
+    }
+}

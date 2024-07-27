@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::routes;
 use axum::{http::StatusCode, response::IntoResponse};
 use derive_more::From;
-use lib_auth::{pwd, token};
+use lib_auth::token;
 use lib_surrealdb::model;
 use serde::Serialize;
 use serde_with::{serde_as, DisplayFromStr};
@@ -45,7 +45,7 @@ pub enum Error {
 // region:    --- Axum IntoResponse
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        debug!("{:<12} - web::Error {self:?}", "INTO_RES");
+        debug!("{:<12} - routes::Error {self:?}", "INTO_RES");
 
         // -- Create a placeholder Axum response.
         let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
@@ -117,10 +117,11 @@ impl Error {
 pub enum ClientError {
     LOGIN_FAIL,
     NO_AUTH,
+    INVALID_AUTHORIZATION_HEADER,
     USERNAME_ALREADY_EXISTS,
     USERNAME_NOT_VALID_FORMAT,
     ENTITY_NOT_FOUND { entity: &'static str, id: i64 },
-    BAD_REQUEST(String),
+    // BAD_REQUEST(String),
     SERVICE_ERROR,
 }
 // endregion: --- Client Error
