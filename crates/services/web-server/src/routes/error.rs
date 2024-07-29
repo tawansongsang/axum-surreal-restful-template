@@ -27,6 +27,9 @@ pub enum Error {
     // #[from]
     // CtxExt(routes::mw_auth::CtxExtError),
 
+    // -- Api Protected
+    YourUserNotAuthorize,
+
     // -- Module
     #[from]
     Model(model::Error),
@@ -79,7 +82,7 @@ impl Error {
             | LoginFailPwdNotMatching { .. } => (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL),
 
             // -- Auth
-            // CtxExt(_) => (StatusCode::FORBIDDEN, ClientError::NO_AUTH),
+            YourUserNotAuthorize => (StatusCode::FORBIDDEN, ClientError::NO_AUTH),
             Model(model::Error::EntityNotFound { entity, id }) => (
                 StatusCode::BAD_REQUEST,
                 ClientError::ENTITY_NOT_FOUND { entity, id: *id },

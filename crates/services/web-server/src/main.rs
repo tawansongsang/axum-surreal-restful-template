@@ -2,6 +2,7 @@ mod config;
 mod error;
 mod log;
 mod middlewares;
+mod params;
 mod routes;
 
 use axum::{middleware, Router};

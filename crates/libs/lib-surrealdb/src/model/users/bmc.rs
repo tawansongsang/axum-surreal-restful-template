@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     ctx::Ctx,
-    model::{Error, ModelManager, Result},
+    model::{users::UsersForAuth, Error, ModelManager, Result},
 };
 
 use super::{Users, UsersCreated, UsersForCreate, UsersRecord};
@@ -14,16 +14,41 @@ use super::{Users, UsersCreated, UsersForCreate, UsersRecord};
 pub struct UsersBmc;
 
 impl UsersBmc {
-    // TODO: fixed get function
-    pub async fn get<'de, E>(_ctx: &Ctx, mm: &ModelManager, id: sql::Uuid) -> Result<Option<E>>
+    pub async fn get<'de, E>(_ctx: &Ctx, mm: &ModelManager, id: &str) -> Result<Option<E>>
     where
         E: DeserializeOwned,
     {
         let db = mm.db();
-        let sql = "SELECT * FROM users:$id LIMIT 1;";
-        let mut result = db.query(sql).bind(("id", id.to_string())).await?;
+        let user = db.select(("users", id)).await?;
 
-        let users: Option<E> = result.take(0)?;
+        Ok(user)
+    }
+
+    pub async fn list<'de, E>(
+        _ctx: &Ctx,
+        mm: &ModelManager,
+        limit: Option<u32>,
+        offset: Option<u32>,
+        order: Option<bool>,
+    ) -> Result<Vec<E>>
+    where
+        E: DeserializeOwned,
+    {
+        let db = mm.db();
+        let order = match order {
+            Some(true) => "DESC",
+            Some(false) => "ASC",
+            None => "DESC",
+        };
+        let sql =
+            format!("SELECT * FROM users ORDER BY create_on {order} LIMIT $limit START $offset;");
+        let mut result = db
+            .query(sql)
+            .bind(("limit", limit.unwrap_or(50)))
+            .bind(("offset", offset.unwrap_or(0)))
+            .await?;
+
+        let users: Vec<E> = result.take(0)?;
 
         Ok(users)
     }
@@ -44,16 +69,6 @@ impl UsersBmc {
             .await?;
 
         let users_for_auth: Option<E> = result.take(0)?;
-
-        Ok(users_for_auth)
-    }
-
-    pub async fn first_by_id<'de, E>(_ctx: &Ctx, mm: &ModelManager, id: &str) -> Result<Option<E>>
-    where
-        E: DeserializeOwned,
-    {
-        let db = mm.db();
-        let users_for_auth = db.select(("users", id)).await?;
 
         Ok(users_for_auth)
     }
@@ -92,8 +107,7 @@ impl UsersBmc {
     ) -> Result<UsersRecord> {
         // Verify Username in DB
         let users =
-            UsersBmc::first_by_username::<UsersRecord>(&ctx, mm, &users_for_create.username)
-                .await?;
+            UsersBmc::first_by_username::<UsersRecord>(ctx, mm, &users_for_create.username).await?;
         if let Some(_) = users {
             return Err(Error::UsernameAlreadyExists);
         }
@@ -162,6 +176,17 @@ impl UsersBmc {
         result
             .take::<Option<bool>>(0)?
             .ok_or(Error::CannotValidateUsernameFromDB)
+    }
+
+    pub async fn is_admin(ctx: &Ctx, mm: &ModelManager) -> Result<bool> {
+        let user_id = ctx.user_id().ok_or(Error::UserIdNotFound)?;
+        let user_for_auth = UsersBmc::get::<UsersForAuth>(ctx, mm, user_id)
+            .await?
+            .ok_or(Error::UserIdNotFound)?;
+        match user_for_auth.role.as_str() {
+            "ADMIN" => Ok(true),
+            _ => Ok(false),
+        }
     }
 }
 

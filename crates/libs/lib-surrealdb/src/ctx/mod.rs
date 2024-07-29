@@ -1,7 +1,5 @@
 mod error;
 
-use std::str::FromStr;
-
 use surrealdb::sql::Thing;
 
 use self::error::{Error, Result};
@@ -31,6 +29,6 @@ impl Ctx {
 
     pub fn user_id_thing(&self) -> Option<Thing> {
         self.user_id()
-            .and_then(|id_str| Thing::from_str(&id_str).ok())
+            .and_then(|id_str| Some(Thing::from(("users", id_str))))
     }
 }

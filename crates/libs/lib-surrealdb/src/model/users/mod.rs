@@ -27,20 +27,18 @@ pub struct Users {
     pub update_on: sql::Datetime,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct UsersGet {
     pub id: sql::Thing,
     pub username: String,
     pub email: String,
-    pub email_verified: sql::Datetime,
+    pub email_verified: Option<sql::Datetime>,
     pub title: String,
     pub firstname: String,
     pub middlename: Option<String>,
     pub lastname: String,
     pub role: String,
     pub image: Option<String>,
-    pub token_salt: sql::Uuid,
-
     pub create_by: sql::Thing,
     pub create_on: sql::Datetime,
     pub update_by: sql::Thing,
@@ -92,12 +90,13 @@ pub struct UsersForLogin {
 pub struct UsersForAuth {
     pub id: sql::Thing,
     pub username: String,
+    pub role: String,
 
     // -- token info
     pub token_salt: sql::Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct UsersRecord {
     pub id: sql::Thing,
 }

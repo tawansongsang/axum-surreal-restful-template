@@ -7,7 +7,7 @@ use lib_auth::jsonwebtoken::{
 use lib_surrealdb::{
     ctx::Ctx,
     model::{
-        users::{bmc::UsersBmc, UsersGet},
+        users::{bmc::UsersBmc, Users},
         ModelManager,
     },
 };
@@ -27,7 +27,7 @@ async fn main() {
     println!("{}.", sub);
     let mm = ModelManager::new().await.unwrap();
     let ctx = Ctx::root_ctx();
-    let user = UsersBmc::first_by_id::<UsersGet>(&ctx, &mm, sub.as_str())
+    let user = UsersBmc::get::<Users>(&ctx, &mm, sub.as_str())
         .await
         .unwrap()
         .unwrap();
@@ -58,7 +58,7 @@ async fn main() {
     println!("{:?}", headers);
     let user_id = headers.kid.unwrap();
     let ctx = Ctx::root_ctx();
-    let user = UsersBmc::first_by_id::<UsersGet>(&ctx, &mm, user_id.as_str())
+    let user = UsersBmc::get::<Users>(&ctx, &mm, user_id.as_str())
         .await
         .unwrap()
         .unwrap();

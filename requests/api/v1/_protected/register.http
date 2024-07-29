@@ -1,4 +1,5 @@
 POST http://{{host}}:{{port}}/api/v1/register HTTP/1.1
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -13,6 +14,7 @@ Content-Type: application/json
 ###
 POST http://{{host}}:{{port}}/api/v1/register HTTP/1.1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
     "username": "demo2@demo.com",
@@ -26,6 +28,7 @@ Content-Type: application/json
 ###
 POST http://{{host}}:{{port}}/api/v1/register HTTP/1.1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
     "username": "demo3@demo.com",
@@ -39,6 +42,7 @@ Content-Type: application/json
 ###
 POST http://{{host}}:{{port}}/api/v1/register HTTP/1.1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
     "username": "demo4@demo.com",
@@ -47,4 +51,17 @@ Content-Type: application/json
     "firstname": "test_demo_firstname4",
     "lastname": "test_demo_lastname4",
     "password": "demo4"
+}
+###
+POST http://{{host}}:{{port}}/api/v1/register HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "username": "demo5@demo.com",
+    "email": "demo5@demo.com",
+    "title": "นาย",
+    "firstname": "test_demo_firstname5",
+    "lastname": "test_demo_lastname5",
+    "password": "demo5"
 }

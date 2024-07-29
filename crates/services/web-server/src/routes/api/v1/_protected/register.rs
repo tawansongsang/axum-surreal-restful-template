@@ -1,16 +1,16 @@
-use axum::{extract::State, routing::post, Json, Router};
-use lib_surrealdb::{
-    ctx::Ctx,
-    model::{
-        users::{bmc::UsersBmc, UsersForCreate},
-        ModelManager,
-    },
+use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
+use lib_surrealdb::model::{
+    users::{bmc::UsersBmc, UsersForCreate},
+    ModelManager,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
 use tracing::debug;
 
-use crate::routes::error::Result;
+use crate::{
+    middlewares::auth::CtxW,
+    routes::{error::Result, Error},
+};
 
 #[derive(Debug, Deserialize)]
 struct RegisterPayload {
@@ -31,11 +31,18 @@ pub fn route(mm: ModelManager) -> Router {
 
 async fn api_register_handler(
     State(mm): State<ModelManager>,
-    // _cookies: Cookies,
+    ctxw: CtxW,
     Json(payload): Json<RegisterPayload>,
-) -> Result<Json<Value>> {
+) -> Result<(StatusCode, Json<Value>)> {
     debug!("{:<12} - api_register_handler", "HANLDER");
-    let root_ctx = Ctx::root_ctx();
+    // let root_ctx = Ctx::root_ctx();
+    let ctx = ctxw.0;
+
+    // check authorize admin
+    let user_id = UsersBmc::is_admin(&ctx, &mm).await?;
+    if user_id == false {
+        return Err(Error::YourUserNotAuthorize);
+    }
 
     let RegisterPayload {
         username,
@@ -57,13 +64,9 @@ async fn api_register_handler(
         password,
     };
 
-    let _user_info_record = UsersBmc::create(&root_ctx, &mm, user_info_for_create).await?;
+    let user_info_record = UsersBmc::create(&ctx, &mm, user_info_for_create).await?;
 
-    let body = Json(json!({
-        "result": {
-            "success": true
-        }
-    }));
+    let body = Json(json!(user_info_record));
 
-    Ok(body)
+    Ok((StatusCode::CREATED, body))
 }

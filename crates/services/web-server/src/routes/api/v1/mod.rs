@@ -4,13 +4,11 @@ use lib_surrealdb::model::ModelManager;
 mod _protected;
 mod login;
 mod logout;
-mod register;
 
 pub fn routes_all(mm: ModelManager) -> Router {
     let routes_all = Router::new();
     routes_all
         .merge(login::route(mm.clone()))
-        .merge(register::route(mm.clone()))
         .merge(logout::route(mm.clone()))
         .merge(_protected::route(mm))
 }

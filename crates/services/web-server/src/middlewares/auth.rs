@@ -3,7 +3,7 @@ use lib_auth::token;
 use lib_surrealdb::{
     ctx::Ctx,
     model::{
-        users::{bmc::UsersBmc, UsersGet},
+        users::{bmc::UsersBmc, Users},
         ModelManager,
     },
 };
@@ -61,7 +61,7 @@ async fn inner_ctx_resolve(mm: State<ModelManager>, token: &str) -> CtxExtResult
     let user_id = token::decode_kid_from_jwt_headers(token)
         .map_err(|_| CtxExtError::InvalidJwtTokenHeader)?;
     let _ctx = Ctx::root_ctx();
-    let user = UsersBmc::first_by_id::<UsersGet>(&_ctx, &mm, &user_id.as_str())
+    let user = UsersBmc::get::<Users>(&_ctx, &mm, &user_id.as_str())
         .await
         .map_err(|e| CtxExtError::ModelAccessError(e.to_string()))?
         .ok_or(CtxExtError::UserNotFound)?;
