@@ -1,6 +1,6 @@
 use lib_auth::pwd::{self, ContentToHash};
 use serde::de::DeserializeOwned;
-use surrealdb::sql;
+use surrealdb::sql::{self, Datetime, Thing};
 use tracing::debug;
 use uuid::Uuid;
 
@@ -9,7 +9,7 @@ use crate::{
     model::{users::UsersForAuth, Error, ModelManager, Result},
 };
 
-use super::{Users, UsersCreated, UsersForCreate, UsersRecord};
+use super::{Users, UsersCreated, UsersForCreate, UsersForUpdate, UsersRecord};
 
 pub struct UsersBmc;
 
@@ -73,6 +73,25 @@ impl UsersBmc {
         Ok(users_for_auth)
     }
 
+    pub async fn update<'de, E>(
+        _ctx: &Ctx,
+        mm: &ModelManager,
+        user_id: &str,
+        user_for_update: UsersForUpdate,
+    ) -> Result<E>
+    where
+        E: DeserializeOwned,
+    {
+        let db = mm.db();
+        let user_record: Result<E> = db
+            .update(("user", user_id))
+            .merge(user_for_update)
+            .await?
+            .ok_or(Error::DataNotFoundFromUpdate);
+
+        user_record
+    }
+
     // TODO: fixed update pwd
     pub async fn update_pwd(
         ctx: &Ctx,
@@ -86,6 +105,11 @@ impl UsersBmc {
         let to_hash = ContentToHash::new(password.to_string(), password_salt);
         let password_hash = pwd::hash_pwd(to_hash).await?;
 
+        // // -- Hashing Password
+        // let to_hash = ContentToHash::new(users_for_create.password, Uuid::from(password_salt));
+        // let password_hash = pwd::hash_pwd(to_hash).await?;
+
+        // let user_id_create = ctx.user_id_thing();
         let sql =
             "UPDATE ONLY users:&id SET password = &password_hash update_by = users:&update_by update_on = time::now();";
         let mut result = db
@@ -104,6 +128,7 @@ impl UsersBmc {
         ctx: &Ctx,
         mm: &ModelManager,
         users_for_create: UsersForCreate,
+        is_email_verified: bool,
     ) -> Result<UsersRecord> {
         // Verify Username in DB
         let users =
@@ -116,34 +141,16 @@ impl UsersBmc {
             return Err(Error::UsernameNotValidFormat);
         }
 
-        let db = mm.db();
-
-        let password_salt = sql::Uuid::new_v4();
-
-        // -- Hashing Password
-        let to_hash = ContentToHash::new(users_for_create.password, Uuid::from(password_salt));
-        let password_hash = pwd::hash_pwd(to_hash).await?;
-
-        let user_id_create = ctx.user_id_thing();
-
-        let users_created = UsersCreated {
-            username: &users_for_create.username,
-            email: &users_for_create.username,
-            title: users_for_create.title,
-            firstname: users_for_create.firstname,
-            middlename: users_for_create.middlename,
-            lastname: users_for_create.lastname,
-            password: password_hash,
-            password_salt,
-            create_by: &user_id_create,
-            update_by: &user_id_create,
+        let email_verified = match is_email_verified {
+            true => Some(Datetime::default()),
+            false => None,
         };
 
-        let mut created: Vec<UsersRecord> = db.create("users").content(users_created).await?;
+        let user_id_create = ctx.user_id_thing();
+        let user_record =
+            UsersBmc::inner_create(user_id_create, mm, users_for_create, email_verified).await?;
 
-        let users = created.pop().ok_or(Error::DataNotFound)?;
-
-        Ok(users)
+        Ok(user_record)
     }
 
     pub async fn validate_password(
@@ -166,7 +173,18 @@ impl UsersBmc {
         Ok(())
     }
 
-    pub async fn validate_username(mm: &ModelManager, username: &str) -> Result<bool> {
+    pub async fn is_admin(ctx: &Ctx, mm: &ModelManager) -> Result<bool> {
+        let user_id = ctx.user_id().ok_or(Error::UserIdNotFound)?;
+        let user_for_auth = UsersBmc::get::<UsersForAuth>(ctx, mm, user_id)
+            .await?
+            .ok_or(Error::UserIdNotFound)?;
+        match user_for_auth.role.as_str() {
+            "ADMIN" => Ok(true),
+            _ => Ok(false),
+        }
+    }
+
+    async fn validate_username(mm: &ModelManager, username: &str) -> Result<bool> {
         let db = mm.db();
 
         let sql = "RETURN string::is::email($username);";
@@ -178,15 +196,39 @@ impl UsersBmc {
             .ok_or(Error::CannotValidateUsernameFromDB)
     }
 
-    pub async fn is_admin(ctx: &Ctx, mm: &ModelManager) -> Result<bool> {
-        let user_id = ctx.user_id().ok_or(Error::UserIdNotFound)?;
-        let user_for_auth = UsersBmc::get::<UsersForAuth>(ctx, mm, user_id)
-            .await?
-            .ok_or(Error::UserIdNotFound)?;
-        match user_for_auth.role.as_str() {
-            "ADMIN" => Ok(true),
-            _ => Ok(false),
-        }
+    async fn inner_create(
+        user_id_create: Option<Thing>,
+        mm: &ModelManager,
+        users_for_create: UsersForCreate,
+        email_verified: Option<Datetime>,
+    ) -> Result<UsersRecord> {
+        let db = mm.db();
+
+        let password_salt = sql::Uuid::new_v4();
+
+        // -- Hashing Password
+        let to_hash = ContentToHash::new(users_for_create.password, Uuid::from(password_salt));
+        let password_hash = pwd::hash_pwd(to_hash).await?;
+
+        let users_created = UsersCreated {
+            username: &users_for_create.username,
+            email: &users_for_create.username,
+            email_verified,
+            title: users_for_create.title,
+            firstname: users_for_create.firstname,
+            middlename: users_for_create.middlename,
+            lastname: users_for_create.lastname,
+            password: password_hash,
+            password_salt,
+            create_by: &user_id_create,
+            update_by: &user_id_create,
+        };
+
+        let mut created: Vec<UsersRecord> = db.create("users").content(users_created).await?;
+
+        let users = created.pop().ok_or(Error::DataNotFound)?;
+
+        Ok(users)
     }
 }
 

@@ -64,9 +64,9 @@ async fn api_register_handler(
         password,
     };
 
-    let user_info_record = UsersBmc::create(&ctx, &mm, user_info_for_create).await?;
+    let user_record = UsersBmc::create(&ctx, &mm, user_info_for_create, false).await?;
 
-    let body = Json(json!(user_info_record));
+    let body = Json(json!(user_record));
 
     Ok((StatusCode::CREATED, body))
 }

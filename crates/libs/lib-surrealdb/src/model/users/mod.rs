@@ -46,6 +46,21 @@ pub struct UsersGet {
 }
 
 #[derive(Debug, Serialize)]
+pub struct UsersCreated<'a> {
+    pub username: &'a str,
+    pub email: &'a str,
+    pub email_verified: Option<sql::Datetime>,
+    pub title: String,
+    pub firstname: String,
+    pub middlename: Option<String>,
+    pub lastname: String,
+    pub password: String,
+    pub password_salt: sql::Uuid,
+    pub create_by: &'a Option<sql::Thing>,
+    pub update_by: &'a Option<sql::Thing>,
+}
+
+#[derive(Debug, Serialize)]
 pub struct UsersForCreate {
     pub username: String,
     pub email: String,
@@ -58,18 +73,18 @@ pub struct UsersForCreate {
 }
 
 #[derive(Debug, Serialize)]
-pub struct UsersCreated<'a> {
-    pub username: &'a str,
-    pub email: &'a str,
-    // pub email_verified: sql::Datetime,
-    pub title: String,
-    pub firstname: String,
+pub struct UsersForUpdate {
+    // pub id: sql::Thing,
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub title: Option<String>,
+    pub firstname: Option<String>,
     pub middlename: Option<String>,
-    pub lastname: String,
-    pub password: String,
-    pub password_salt: sql::Uuid,
-    pub create_by: &'a Option<sql::Thing>,
-    pub update_by: &'a Option<sql::Thing>,
+    pub lastname: Option<String>,
+    pub image: Option<String>,
+    pub role: Option<String>,
+    pub update_by: sql::Thing,
+    pub update_on: sql::Datetime,
 }
 
 #[derive(Debug, Deserialize)]
