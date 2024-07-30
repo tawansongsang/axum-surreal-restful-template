@@ -30,7 +30,10 @@ pub fn route(mm: ModelManager) -> Router {
     Router::new()
         .route(
             "/users",
-            get(api_get_users_handler).post(api_create_user_handler),
+            get(api_get_users_handler)
+                .post(api_create_user_handler)
+                .put(api_update_user_handler)
+                .delete(api_delete_user_handler),
         )
         .with_state(mm)
 }
@@ -64,7 +67,6 @@ async fn api_get_users_handler(
     Ok(body)
 }
 
-// TODO: implement create user handler
 async fn api_create_user_handler(
     State(mm): State<ModelManager>,
     ctxw: CtxW,
@@ -105,6 +107,18 @@ async fn api_create_user_handler(
     let body = Json(json!(user_record));
 
     Ok((StatusCode::CREATED, body))
+}
+
+async fn api_delete_user_handler() -> Result<(StatusCode, Json<Value>)> {
+    todo!()
+}
+
+async fn api_update_user_handler() -> Result<(StatusCode, Json<Value>)> {
+    todo!()
+}
+
+async fn api_update_pwd_user_handler() -> Result<(StatusCode, Json<Value>)> {
+    todo!()
 }
 
 // endregion: --- Users

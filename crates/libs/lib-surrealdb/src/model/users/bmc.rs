@@ -6,7 +6,10 @@ use uuid::Uuid;
 
 use crate::{
     ctx::Ctx,
-    model::{users::UsersForAuth, Error, ModelManager, Result},
+    model::{
+        users::{UsersForAuth, UsersForDelete},
+        Error, ModelManager, Result,
+    },
 };
 
 use super::{Users, UsersCreated, UsersForCreate, UsersForUpdate, UsersRecord};
@@ -73,6 +76,7 @@ impl UsersBmc {
         Ok(users_for_auth)
     }
 
+    // TODO: implement update
     pub async fn update<'de, E>(
         _ctx: &Ctx,
         mm: &ModelManager,
@@ -87,7 +91,32 @@ impl UsersBmc {
             .update(("user", user_id))
             .merge(user_for_update)
             .await?
-            .ok_or(Error::DataNotFoundFromUpdate);
+            .ok_or(Error::DataNotFoundForUpdate);
+
+        user_record
+    }
+
+    pub async fn delete(
+        _ctx: &Ctx,
+        mm: &ModelManager,
+        user_id: &str,
+        user_for_delete: UsersForDelete,
+    ) -> Result<UsersRecord> {
+        let db = mm.db();
+        // let user_id_deleting = ctx.user_id_thing();
+        // if user_id_deleting.is_none() {
+        //     return Err(Error::CannotGetUserIdFromCtx);
+        // }
+
+        // let user_for_delete = UsersForDelete {
+        //     deleted_by: user_id_deleting,
+        //     deleted_on: Some(sql::Datetime::default()),
+        // };
+        let user_record: Result<UsersRecord> = db
+            .update(("user", user_id))
+            .merge(user_for_delete)
+            .await?
+            .ok_or(Error::DataNotFoundForDelete);
 
         user_record
     }

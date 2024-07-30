@@ -21,6 +21,8 @@ DEFINE FIELD create_by ON TABLE users TYPE option<record<users>>;
 DEFINE FIELD create_on ON TABLE users TYPE datetime DEFAULT time::now();
 DEFINE FIELD update_by ON TABLE users TYPE option<record<users>>;
 DEFINE FIELD update_on ON TABLE users TYPE datetime DEFAULT time::now();
+DEFINE FIELD deleted_by ON TABLE users TYPE option<record<users>>;
+DEFINE FIELD deleted_on ON TABLE users TYPE option<datetime>;
 
 DEFINE INDEX usernameIndex ON TABLE users COLUMNS username UNIQUE;
 DEFINE INDEX emailIndex ON TABLE users COLUMNS email UNIQUE;

@@ -8,7 +8,7 @@ pub struct Users {
     pub id: sql::Thing,
     pub username: String,
     pub email: String,
-    pub email_verified: sql::Datetime,
+    pub email_verified: Option<sql::Datetime>,
     pub title: String,
     pub firstname: String,
     pub middlename: Option<String>,
@@ -25,6 +25,8 @@ pub struct Users {
     pub create_on: sql::Datetime,
     pub update_by: sql::Thing,
     pub update_on: sql::Datetime,
+    pub dateled_by: Option<sql::Thing>,
+    pub deleted_on: Option<sql::Datetime>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -85,6 +87,12 @@ pub struct UsersForUpdate {
     pub role: Option<String>,
     pub update_by: sql::Thing,
     pub update_on: sql::Datetime,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UsersForDelete {
+    pub deleted_by: Option<sql::Thing>,
+    pub deleted_on: Option<sql::Datetime>,
 }
 
 #[derive(Debug, Deserialize)]

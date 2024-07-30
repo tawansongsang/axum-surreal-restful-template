@@ -1,0 +1,67 @@
+POST http://{{host}}:{{port}}/api/v1/users HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "username": "demo2@demo.com",
+    "email": "demo2@demo.com",
+    "title": "นาย",
+    "firstname": "test_demo_firstname2",
+    "lastname": "test_demo_lastname2",
+    "password": "demo2"
+}
+
+###
+POST http://{{host}}:{{port}}/api/v1/users HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "username": "demo3@demo.com",
+    "email": "demo3@demo.com",
+    "title": "นางสาว",
+    "firstname": "test_demo_firstname3",
+    "lastname": "test_demo_lastname3",
+    "password": "demo3"
+}
+
+###
+POST http://{{host}}:{{port}}/api/v1/users HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "username": "demo4@demo.com",
+    "email": "demo4@demo.com",
+    "title": "นางสาว",
+    "firstname": "test_demo_firstname4",
+    "lastname": "test_demo_lastname4",
+    "password": "demo4"
+}
+
+###
+POST http://{{host}}:{{port}}/api/v1/users HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "username": "demo5@demo.com",
+    "email": "demo5@demo.com",
+    "title": "นาย",
+    "firstname": "test_demo_firstname5",
+    "lastname": "test_demo_lastname5",
+    "password": "demo5"
+}
+###
+POST http://{{host}}:{{port}}/api/v1/users HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "username": "demo6@demo.com",
+    "email": "demo6@demo.com",
+    "title": "นาย",
+    "firstname": "test_demo_firstname6",
+    "lastname": "test_demo_lastname6",
+    "password": "demo6"
+}
