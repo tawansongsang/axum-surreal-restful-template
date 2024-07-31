@@ -23,9 +23,14 @@ pub enum Error {
     LoginFailPwdNotMatching {
         user_id: String,
     },
+
+    // -- Data
+    DataNotFound,
+
     // -- CtxExtError
     // #[from]
     // CtxExt(routes::mw_auth::CtxExtError),
+    UserIdInCtxNotFound,
 
     // -- Api Protected
     YourUserNotAuthorize,
@@ -83,6 +88,10 @@ impl Error {
 
             // -- Auth
             YourUserNotAuthorize => (StatusCode::FORBIDDEN, ClientError::NO_AUTH),
+
+            // -- Data
+            DataNotFound => (StatusCode::NOT_FOUND, ClientError::DATA_NOT_FOUND),
+
             Model(model::Error::EntityNotFound { entity, id }) => (
                 StatusCode::BAD_REQUEST,
                 ClientError::ENTITY_NOT_FOUND { entity, id: *id },
@@ -125,6 +134,7 @@ pub enum ClientError {
     USERNAME_NOT_VALID_FORMAT,
     ENTITY_NOT_FOUND { entity: &'static str, id: i64 },
     // BAD_REQUEST(String),
+    DATA_NOT_FOUND,
     SERVICE_ERROR,
 }
 // endregion: --- Client Error

@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::StatusCode,
-    routing::{get, post},
+    routing::{get, post, put},
     Json, Router,
 };
 use lib_surrealdb::model::{
@@ -26,31 +26,62 @@ struct UsersForCreatePayload {
     password: String,
 }
 
+#[derive(Deserialize)]
+struct PageParams {
+    user_id: String,
+}
+
 pub fn route(mm: ModelManager) -> Router {
     Router::new()
+        .route("/users", get(list_users_handler).post(create_user_handler))
         .route(
-            "/users",
-            get(api_get_users_handler)
-                .post(api_create_user_handler)
-                .put(api_update_user_handler)
-                .delete(api_delete_user_handler),
+            "/users/:user_id",
+            get(get_users_handler)
+                .put(update_user_handler)
+                .delete(delete_user_handler),
         )
+        .route("/users/:user_id/password", put(update_pwd_user_handler))
         .with_state(mm)
 }
 
 // region:    --- Users
-async fn api_get_users_handler(
+async fn get_users_handler(
+    State(mm): State<ModelManager>,
+    ctxw: CtxW,
+    Path(PageParams { user_id }): Path<PageParams>,
+) -> Result<Json<Value>> {
+    debug!("{:<12} - get_users_handler", "HANLDER");
+    let ctx = ctxw.0;
+    let user_id_from_ctx = ctx.user_id().ok_or(Error::UserIdInCtxNotFound)?;
+
+    // check authorize admin
+    let is_authorized = UsersBmc::is_admin(&ctx, &mm).await?;
+    if !(is_authorized || user_id_from_ctx == &user_id) {
+        return Err(Error::YourUserNotAuthorize);
+    }
+
+    let users = UsersBmc::get::<UsersGet>(&ctx, &mm, &user_id)
+        .await?
+        .ok_or(Error::DataNotFound)?;
+
+    // -- Create the success body.
+    let body = Json(json!(users));
+
+    Ok(body)
+}
+
+async fn list_users_handler(
     State(mm): State<ModelManager>,
     ctxw: CtxW,
     Query(params): Query<PaginationParams>,
 ) -> Result<Json<Value>> {
-    debug!("{:<12} - api_get_users_handler", "HANLDER");
+    debug!("{:<12} - list_users_handler", "HANLDER");
     let ctx = ctxw.0;
-    debug!("{:<12} - api_get_users_handler {:?}", "HANDLER", ctx);
+    debug!("{:<12} - list_users_handler {:?}", "HANDLER", ctx);
 
     // check authorize admin
-    let user_id = UsersBmc::is_admin(&ctx, &mm).await?;
-    if user_id == false {
+    let is_authorized = UsersBmc::is_admin(&ctx, &mm).await?;
+    if is_authorized == false {
         return Err(Error::YourUserNotAuthorize);
     }
 
@@ -67,17 +98,17 @@ async fn api_get_users_handler(
     Ok(body)
 }
 
-async fn api_create_user_handler(
+async fn create_user_handler(
     State(mm): State<ModelManager>,
     ctxw: CtxW,
     Json(payload): Json<UsersForCreatePayload>,
 ) -> Result<(StatusCode, Json<Value>)> {
-    debug!("{:<12} - api_create_user_handler", "HANDLER");
+    debug!("{:<12} - create_user_handler", "HANDLER");
     let ctx = ctxw.0;
 
     // check authorize admin
-    let user_id = UsersBmc::is_admin(&ctx, &mm).await?;
-    if user_id == false {
+    let is_authorized = UsersBmc::is_admin(&ctx, &mm).await?;
+    if is_authorized == false {
         return Err(Error::YourUserNotAuthorize);
     }
 
@@ -109,15 +140,27 @@ async fn api_create_user_handler(
     Ok((StatusCode::CREATED, body))
 }
 
-async fn api_delete_user_handler() -> Result<(StatusCode, Json<Value>)> {
+async fn delete_user_handler(
+    State(mm): State<ModelManager>,
+    ctxw: CtxW,
+    Path(PageParams { user_id }): Path<PageParams>,
+) -> Result<(StatusCode, Json<Value>)> {
     todo!()
 }
 
-async fn api_update_user_handler() -> Result<(StatusCode, Json<Value>)> {
+async fn update_user_handler(
+    State(mm): State<ModelManager>,
+    ctxw: CtxW,
+    Path(PageParams { user_id }): Path<PageParams>,
+) -> Result<(StatusCode, Json<Value>)> {
     todo!()
 }
 
-async fn api_update_pwd_user_handler() -> Result<(StatusCode, Json<Value>)> {
+async fn update_pwd_user_handler(
+    State(mm): State<ModelManager>,
+    ctxw: CtxW,
+    Path(PageParams { user_id }): Path<PageParams>,
+) -> Result<(StatusCode, Json<Value>)> {
     todo!()
 }
 

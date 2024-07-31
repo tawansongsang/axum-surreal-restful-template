@@ -15,7 +15,7 @@
         "$shared": {
             "host": "localhost",
             "port": "8080",
-            "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6InFob2oyd2pqYzd3Nmxob3U4dnU0In0.eyJzdWIiOiJxaG9qMndqamM3dzZsaG91OHZ1NCIsImV4cCI6MTcyMjM0Mzc5Nn0.XcuQnfm7pmbErBv8k8EB821G6kDVv3DXPmOJoyeBBSY",
+            "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6InFob2oyd2pqYzd3Nmxob3U4dnU0In0.eyJzdWIiOiJxaG9qMndqamM3dzZsaG91OHZ1NCIsImV4cCI6MTcyMjQzNDE2MX0.SXFUsIxA36ePdUnFfodHhD-DX7P-G49zOtNm6v7BJ_Y",
         }
     }
 }
