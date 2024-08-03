@@ -23,6 +23,7 @@ impl UsersBmc {
     {
         let db = mm.db();
         let user = db.select(("users", id)).await?;
+        // TODO: check user was deleted.
 
         Ok(user)
     }
@@ -43,8 +44,9 @@ impl UsersBmc {
             Some(false) => "ASC",
             None => "DESC",
         };
+
         let sql =
-            format!("SELECT * FROM users ORDER BY create_on {order} LIMIT $limit START $offset;");
+            format!("SELECT * FROM users WHERE deleted_on IS NONE ORDER BY create_on {order} LIMIT $limit START $offset;");
         let mut result = db
             .query(sql)
             .bind(("limit", limit.unwrap_or(50)))
@@ -76,7 +78,6 @@ impl UsersBmc {
         Ok(users_for_auth)
     }
 
-    // TODO: implement update
     pub async fn update<'de, E>(
         _ctx: &Ctx,
         mm: &ModelManager,
@@ -103,15 +104,7 @@ impl UsersBmc {
         user_for_delete: UsersForDelete,
     ) -> Result<UsersRecord> {
         let db = mm.db();
-        // let user_id_deleting = ctx.user_id_thing();
-        // if user_id_deleting.is_none() {
-        //     return Err(Error::CannotGetUserIdFromCtx);
-        // }
 
-        // let user_for_delete = UsersForDelete {
-        //     deleted_by: user_id_deleting,
-        //     deleted_on: Some(sql::Datetime::default()),
-        // };
         let user_record: Result<UsersRecord> = db
             .update(("user", user_id))
             .merge(user_for_delete)
@@ -121,7 +114,6 @@ impl UsersBmc {
         user_record
     }
 
-    // TODO: fixed update pwd
     pub async fn update_pwd(
         ctx: &Ctx,
         mm: &ModelManager,
@@ -134,11 +126,6 @@ impl UsersBmc {
         let to_hash = ContentToHash::new(password.to_string(), password_salt);
         let password_hash = pwd::hash_pwd(to_hash).await?;
 
-        // // -- Hashing Password
-        // let to_hash = ContentToHash::new(users_for_create.password, Uuid::from(password_salt));
-        // let password_hash = pwd::hash_pwd(to_hash).await?;
-
-        // let user_id_create = ctx.user_id_thing();
         let sql =
             "UPDATE ONLY users:&id SET password = &password_hash update_by = users:&update_by update_on = time::now();";
         let mut result = db

@@ -91,8 +91,8 @@ pub struct UsersForUpdate {
 
 #[derive(Debug, Serialize)]
 pub struct UsersForDelete {
-    pub deleted_by: Option<sql::Thing>,
-    pub deleted_on: Option<sql::Datetime>,
+    pub deleted_by: sql::Thing,
+    pub deleted_on: sql::Datetime,
 }
 
 #[derive(Debug, Deserialize)]

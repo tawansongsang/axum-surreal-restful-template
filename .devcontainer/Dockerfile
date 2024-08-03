@@ -1,4 +1,3 @@
-FROM rust:slim-bookworm
-RUN apt update && apt upgrade -y \
-    && apt install -y git
-RUN rustup component add rustfmt
+FROM fedora:40
+RUN dnf update -y \
+    && dnf install git cargo rustup rustfmt rust-analyzer -y

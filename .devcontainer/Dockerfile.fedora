@@ -1,0 +1,4 @@
+FROM fedora:40
+RUN dnf update -y \
+    && dnf install git cargo rustup rustfmt -y
+# RUN rustup component add rustfmt
