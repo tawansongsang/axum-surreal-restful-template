@@ -12,7 +12,10 @@ use crate::{
     },
 };
 
-use super::{Users, UsersCreated, UsersForCreate, UsersForUpdate, UsersRecord};
+use super::{
+    Users, UsersCreated, UsersDeleted, UsersForCreate, UsersForUpdate, UsersForUpdateByAdmin,
+    UsersRecord, UsersUpdated, UsersUpdatedByAdmin,
+};
 
 pub struct UsersBmc;
 
@@ -22,8 +25,9 @@ impl UsersBmc {
         E: DeserializeOwned,
     {
         let db = mm.db();
-        let user = db.select(("users", id)).await?;
-        // TODO: check user was deleted.
+        let sql = format!("SELECT * FROM ONLY type::thing('users', $id) WHERE deleted_on IS NONE;");
+        let mut result = db.query(sql).bind(("id", id)).await?;
+        let user = result.take(0)?;
 
         Ok(user)
     }
@@ -67,7 +71,7 @@ impl UsersBmc {
         E: DeserializeOwned,
     {
         let db = mm.db();
-        let sql = "SELECT * FROM users WHERE username = $username LIMIT 1;";
+        let sql = "SELECT * FROM users WHERE username = $username AND deleted_on IS NONE LIMIT 1;";
         let mut result = db
             .query(sql)
             .bind(("username", username.to_string()))
@@ -78,8 +82,30 @@ impl UsersBmc {
         Ok(users_for_auth)
     }
 
-    pub async fn update<'de, E>(
+    pub async fn delete(
         _ctx: &Ctx,
+        mm: &ModelManager,
+        user_id: &str,
+        user_for_delete: UsersForDelete,
+    ) -> Result<()> {
+        let db = mm.db();
+
+        let user_deleted = UsersDeleted {
+            deleted_by: user_for_delete.deleted_by,
+            deleted_on: Datetime::default(),
+        };
+
+        let _user_record: Result<UsersRecord> = db
+            .update(("users", user_id))
+            .merge(user_deleted)
+            .await?
+            .ok_or(Error::DataNotFoundForDelete);
+
+        Ok(())
+    }
+
+    pub async fn update<'de, E>(
+        ctx: &Ctx,
         mm: &ModelManager,
         user_id: &str,
         user_for_update: UsersForUpdate,
@@ -88,32 +114,62 @@ impl UsersBmc {
         E: DeserializeOwned,
     {
         let db = mm.db();
+        let user_id_update = ctx.user_id_thing().ok_or(Error::CannotGetUserIdFromCtx)?;
+
+        let users_updated = UsersUpdated {
+            username: user_for_update.username,
+            email: user_for_update.email,
+            title: user_for_update.title,
+            firstname: user_for_update.firstname,
+            middlename: user_for_update.middlename,
+            lastname: user_for_update.lastname,
+            image: user_for_update.image,
+            update_by: user_id_update,
+            update_on: Datetime::default(),
+        };
         let user_record: Result<E> = db
-            .update(("user", user_id))
-            .merge(user_for_update)
+            .update(("users", user_id))
+            .merge(users_updated)
             .await?
             .ok_or(Error::DataNotFoundForUpdate);
 
         user_record
     }
 
-    pub async fn delete(
-        _ctx: &Ctx,
+    pub async fn update_by_admin<'de, E>(
+        ctx: &Ctx,
         mm: &ModelManager,
         user_id: &str,
-        user_for_delete: UsersForDelete,
-    ) -> Result<UsersRecord> {
+        user_for_update_by_admin: UsersForUpdateByAdmin,
+    ) -> Result<E>
+    where
+        E: DeserializeOwned,
+    {
         let db = mm.db();
+        let user_id_update = ctx.user_id_thing().ok_or(Error::CannotGetUserIdFromCtx)?;
 
-        let user_record: Result<UsersRecord> = db
-            .update(("user", user_id))
-            .merge(user_for_delete)
+        let users_updated_by_admin = UsersUpdatedByAdmin {
+            username: user_for_update_by_admin.username,
+            email: user_for_update_by_admin.email,
+            title: user_for_update_by_admin.title,
+            firstname: user_for_update_by_admin.firstname,
+            middlename: user_for_update_by_admin.middlename,
+            lastname: user_for_update_by_admin.lastname,
+            image: user_for_update_by_admin.image,
+            role: user_for_update_by_admin.role,
+            update_by: user_id_update,
+            update_on: Datetime::default(),
+        };
+        let user_record: Result<E> = db
+            .update(("users", user_id))
+            .merge(users_updated_by_admin)
             .await?
-            .ok_or(Error::DataNotFoundForDelete);
+            .ok_or(Error::DataNotFoundForUpdate);
 
         user_record
     }
 
+    // TODO: implement update pwd
     pub async fn update_pwd(
         ctx: &Ctx,
         mm: &ModelManager,

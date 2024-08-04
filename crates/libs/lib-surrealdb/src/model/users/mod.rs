@@ -76,7 +76,43 @@ pub struct UsersForCreate {
 
 #[derive(Debug, Serialize)]
 pub struct UsersForUpdate {
-    // pub id: sql::Thing,
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub title: Option<String>,
+    pub firstname: Option<String>,
+    pub middlename: Option<String>,
+    pub lastname: Option<String>,
+    pub image: Option<String>,
+    // pub role: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UsersUpdated {
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub title: Option<String>,
+    pub firstname: Option<String>,
+    pub middlename: Option<String>,
+    pub lastname: Option<String>,
+    pub image: Option<String>,
+    pub update_by: sql::Thing,
+    pub update_on: sql::Datetime,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UsersForUpdateByAdmin {
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub title: Option<String>,
+    pub firstname: Option<String>,
+    pub middlename: Option<String>,
+    pub lastname: Option<String>,
+    pub image: Option<String>,
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UsersUpdatedByAdmin {
     pub username: Option<String>,
     pub email: Option<String>,
     pub title: Option<String>,
@@ -91,6 +127,11 @@ pub struct UsersForUpdate {
 
 #[derive(Debug, Serialize)]
 pub struct UsersForDelete {
+    pub deleted_by: sql::Thing,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UsersDeleted {
     pub deleted_by: sql::Thing,
     pub deleted_on: sql::Datetime,
 }

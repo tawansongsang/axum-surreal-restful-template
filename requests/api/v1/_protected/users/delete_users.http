@@ -1,0 +1,8 @@
+DELETE  http://{{host}}:{{port}}/api/v1/users/szatp14i49u5za0c0pg5 HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+### 
+DELETE  http://{{host}}:{{port}}/api/v1/users/1pgphh5w27ivrz7xjh3w HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+###
