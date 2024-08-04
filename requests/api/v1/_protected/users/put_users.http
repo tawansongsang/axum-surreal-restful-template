@@ -1,0 +1,12 @@
+PUT http://{{host}}:{{port}}/api/v1/users/q9l7qi5s1mzm8m6u7o9s HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "email": "demo2.11@demo.com",
+    "title": "นาย",
+    "firstname": "test_demo_firstname2.1",
+    "middlename": null,
+    "lastname": "test_demo_lastname2.1",
+    "image": null
+}

@@ -76,7 +76,6 @@ pub struct UsersForCreate {
 
 #[derive(Debug, Serialize)]
 pub struct UsersForUpdate {
-    pub username: Option<String>,
     pub email: Option<String>,
     pub title: Option<String>,
     pub firstname: Option<String>,
@@ -88,7 +87,6 @@ pub struct UsersForUpdate {
 
 #[derive(Debug, Serialize)]
 pub struct UsersUpdated {
-    pub username: Option<String>,
     pub email: Option<String>,
     pub title: Option<String>,
     pub firstname: Option<String>,

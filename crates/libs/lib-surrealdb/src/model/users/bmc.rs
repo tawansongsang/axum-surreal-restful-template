@@ -13,8 +13,8 @@ use crate::{
 };
 
 use super::{
-    Users, UsersCreated, UsersDeleted, UsersForCreate, UsersForUpdate, UsersForUpdateByAdmin,
-    UsersRecord, UsersUpdated, UsersUpdatedByAdmin,
+    UsersCreated, UsersDeleted, UsersForCreate, UsersForUpdate, UsersForUpdateByAdmin, UsersRecord,
+    UsersUpdated, UsersUpdatedByAdmin,
 };
 
 pub struct UsersBmc;
@@ -117,7 +117,6 @@ impl UsersBmc {
         let user_id_update = ctx.user_id_thing().ok_or(Error::CannotGetUserIdFromCtx)?;
 
         let users_updated = UsersUpdated {
-            username: user_for_update.username,
             email: user_for_update.email,
             title: user_for_update.title,
             firstname: user_for_update.firstname,
@@ -169,29 +168,32 @@ impl UsersBmc {
         user_record
     }
 
-    // TODO: implement update pwd
     pub async fn update_pwd(
         ctx: &Ctx,
         mm: &ModelManager,
-        id: sql::Thing,
-        password: &str,
+        id: &str,
+        password: String,
         password_salt: Uuid,
     ) -> Result<()> {
         let db = mm.db();
+        let user_id = ctx.user_id().ok_or(Error::CannotGetUserIdFromCtx)?;
+
         // -- Hashing Password
-        let to_hash = ContentToHash::new(password.to_string(), password_salt);
+        let to_hash = ContentToHash::new(password, password_salt);
         let password_hash = pwd::hash_pwd(to_hash).await?;
 
         let sql =
-            "UPDATE ONLY users:&id SET password = &password_hash update_by = users:&update_by update_on = time::now();";
+            "UPDATE ONLY type::thing('users':&id) SET password = &password_hash, update_by = users:&update_by, update_on = time::now();";
         let mut result = db
             .query(sql)
             .bind(("id", id))
             .bind(("password_hash", password_hash))
-            .bind(("update_by", ctx.user_id()))
+            .bind(("update_by", user_id))
             .await?;
 
-        let _users: Option<Users> = result.take(0)?;
+        let _users_record = result
+            .take::<Option<UsersRecord>>(0)?
+            .ok_or(Error::DataNotFoundForUpdate)?;
 
         Ok(())
     }

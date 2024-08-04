@@ -6,8 +6,8 @@ use axum::{
 };
 use lib_surrealdb::model::{
     users::{
-        bmc::UsersBmc, UsersForCreate, UsersForDelete, UsersForUpdate, UsersForUpdateByAdmin,
-        UsersGet, UsersRecord,
+        bmc::UsersBmc, Users, UsersForCreate, UsersForDelete, UsersForUpdate,
+        UsersForUpdateByAdmin, UsersGet, UsersRecord,
     },
     ModelManager,
 };
@@ -31,7 +31,6 @@ struct UsersForCreatePayload {
 
 #[derive(Debug, Deserialize)]
 struct UsersForUpdatePayload {
-    pub username: Option<String>,
     pub email: Option<String>,
     pub title: Option<String>,
     pub firstname: Option<String>,
@@ -50,6 +49,11 @@ struct UsersForUpdateByAdminPayload {
     pub lastname: Option<String>,
     pub image: Option<String>,
     pub role: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct UsersForUpdatePasswordPayload {
+    pub password: String,
 }
 
 #[derive(Deserialize)]
@@ -210,7 +214,6 @@ async fn update_user_handler(
     }
 
     let user_for_update = UsersForUpdate {
-        username: payload.username,
         email: payload.email,
         title: payload.title,
         firstname: payload.firstname,
@@ -233,7 +236,7 @@ async fn update_user_by_admin_handler(
     Path(PageParams { user_id }): Path<PageParams>,
     Json(payload): Json<UsersForUpdateByAdminPayload>,
 ) -> Result<(StatusCode, Json<Value>)> {
-    debug!("{:<12} - update_user_handler", "HANDLER");
+    debug!("{:<12} - update_user_by_admin_handler", "HANDLER");
     let ctx = ctxw.0;
 
     // check authorize admin
@@ -266,8 +269,27 @@ async fn update_pwd_user_handler(
     State(mm): State<ModelManager>,
     ctxw: CtxW,
     Path(PageParams { user_id }): Path<PageParams>,
-) -> Result<(StatusCode, Json<Value>)> {
-    todo!()
+    Json(payload): Json<UsersForUpdatePasswordPayload>,
+) -> Result<StatusCode> {
+    debug!("{:<12} - update_pwd_user_handler", "HANDLER");
+    let ctx = ctxw.0;
+    let user_id_from_ctx = ctx.user_id().ok_or(Error::UserIdInCtxNotFound)?;
+
+    // check authorize admin
+    let is_authorized = UsersBmc::is_admin(&ctx, &mm).await?;
+    if !(is_authorized || user_id_from_ctx == &user_id) {
+        return Err(Error::YourUserNotAuthorize);
+    }
+
+    let UsersForUpdatePasswordPayload { password } = payload;
+
+    let Users { password_salt, .. } = UsersBmc::get(&ctx, &mm, &user_id)
+        .await?
+        .ok_or(Error::DataNotFound)?;
+
+    let _ = UsersBmc::update_pwd(&ctx, &mm, &user_id, password, password_salt.0).await?;
+
+    Ok(StatusCode::OK)
 }
 
 // endregion: --- Users

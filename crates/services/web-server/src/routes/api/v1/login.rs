@@ -65,7 +65,14 @@ async fn api_login_handler(
     // -- Update password scheme if needed
     if let SchemeStatus::Outdated = scheme_status {
         debug!("pwd encrypt scheme outdated, upgrading.");
-        UsersBmc::update_pwd(&root_ctx, &mm, user.id, &password, password_salt_uuid).await?;
+        UsersBmc::update_pwd(
+            &root_ctx,
+            &mm,
+            user_id.as_str(),
+            password,
+            password_salt_uuid,
+        )
+        .await?;
     }
 
     // -- Set web token if not send back token via body
