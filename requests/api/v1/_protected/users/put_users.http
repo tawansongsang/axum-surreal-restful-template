@@ -10,3 +10,34 @@ Content-Type: application/json
     "lastname": "test_demo_lastname2.1",
     "image": null
 }
+###
+PUT http://{{host}}:{{port}}/api/v1/users/1vs3eznwgzn4as1zt55n/password HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "password": "demo6"
+}
+###
+PUT http://{{host}}:{{port}}/api/v1/users/q9l7qi5s1mzm8m6u7o9s/password HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "password": "demo21"
+}
+###
+PUT http://{{host}}:{{port}}/api/v1/users/q9l7qi5s1mzm8m6u7o9s/update_by_admin HTTP/1.1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "username": "demo2.1@demo.com",
+    "email": "demo2.1@demo.com",
+    "title": "นาย",
+    "firstname": "test_demo_firstname2",
+    "middlename": null,
+    "lastname": "test_demo_lastname2",
+    "image": null,
+    "role": "USER"
+}

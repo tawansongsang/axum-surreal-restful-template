@@ -183,7 +183,7 @@ impl UsersBmc {
         let password_hash = pwd::hash_pwd(to_hash).await?;
 
         let sql =
-            "UPDATE ONLY type::thing('users':&id) SET password = &password_hash, update_by = users:&update_by, update_on = time::now();";
+            "UPDATE type::thing('users',$id) SET password = $password_hash, update_by = type::thing('users', $update_by), update_on = time::now();";
         let mut result = db
             .query(sql)
             .bind(("id", id))
