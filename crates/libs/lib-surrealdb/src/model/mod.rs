@@ -1,6 +1,7 @@
 mod conditions;
 mod error;
 mod store;
+pub mod tasks;
 pub mod users;
 
 use tracing::info;
